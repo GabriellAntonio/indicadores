@@ -7,20 +7,15 @@
 
     <link rel="icon" href="./favicon.ico">
     
-    <!-- Tailwind CSS (Estilos) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- FontAwesome (Ícones Novos) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- React & ReactDOM (Motor do App) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- Babel (Tradutor de código) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Lucide Icons (Ícones Antigos) -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
@@ -35,7 +30,6 @@
 <body>
     <div id="root"></div>
 
-    <!-- AQUI COMEÇA O CÓDIGO DO SISTEMA -->
     <script type="text/babel">
         const { useState, useEffect } = React;
 
@@ -589,6 +583,7 @@
         const App = () => {
           const [activeTab, setActiveTab] = useState("APS");
           const [selectedCategory, setSelectedCategory] = useState("Todos");
+          const [searchTerm, setSearchTerm] = useState("");
 
           let currentIndicators = [];
           let headerTitle = "";
@@ -631,9 +626,17 @@
           
           const categories = ["Todos", ...new Set(currentIndicators.map(i => i.category))];
           
-          const filteredIndicators = selectedCategory === "Todos" 
-            ? currentIndicators 
-            : currentIndicators.filter(i => i.category === selectedCategory);
+          // Lógica de Filtro Atualizada (Categoria + Busca por Texto)
+          const filteredIndicators = currentIndicators.filter(indicator => {
+            const matchesCategory = selectedCategory === "Todos" || indicator.category === selectedCategory;
+            const searchLower = searchTerm.toLowerCase();
+            const matchesSearch = 
+                indicator.title.toLowerCase().includes(searchLower) || 
+                indicator.code.toLowerCase().includes(searchLower) || 
+                (indicator.description && indicator.description.toLowerCase().includes(searchLower));
+
+            return matchesCategory && matchesSearch;
+          });
 
           return (
             <div className="flex min-h-screen font-sans text-slate-800">
@@ -643,10 +646,10 @@
                 <div className="p-6 border-b border-slate-800">
                   <h1 className="text-xl font-bold flex items-center gap-2">
                     <img 
-    src="./seu-logo.png" 
-    alt="Logo SYSMAR" 
-    className="w-8 h-8 object-contain" 
-  />
+                        src="./seu-logo.png" 
+                        alt="Logo SYSMAR" 
+                        className="w-8 h-8 object-contain" 
+                    />
                     SYSMAR      
                   </h1>
                   <p className="text-xs text-slate-400 mt-1">Painel de Metas 2025</p>
@@ -658,46 +661,43 @@
                   </div>
                   
                   <button 
-                    onClick={() => {setActiveTab("APS"); setSelectedCategory("Todos")}}
+                    onClick={() => {setActiveTab("APS"); setSelectedCategory("Todos"); setSearchTerm("");}}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                       activeTab === "APS" 
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" 
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
-                    {/* --- ÍCONE SUBSTITUÍDO AQUI --- */}
                     <i className="fa-solid fa-house-medical w-5 h-5 flex items-center justify-center"></i>
                     <span className="font-medium">Atenção Primária</span>
                   </button>
 
                   <button 
-                    onClick={() => {setActiveTab("ACS"); setSelectedCategory("Todos")}}
+                    onClick={() => {setActiveTab("ACS"); setSelectedCategory("Todos"); setSearchTerm("");}}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                       activeTab === "ACS" 
                       ? "bg-orange-600 text-white shadow-lg shadow-orange-900/50" 
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
-                    {/* --- ÍCONE SUBSTITUÍDO AQUI --- */}
                     <i className="fa-solid fa-house-medical-circle-check w-5 h-5 flex items-center justify-center"></i>
                     <span className="font-medium">Cadastro & ACS</span>
                   </button>
 
                   <button 
-                    onClick={() => {setActiveTab("eMulti"); setSelectedCategory("Todos")}}
+                    onClick={() => {setActiveTab("eMulti"); setSelectedCategory("Todos"); setSearchTerm("");}}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                       activeTab === "eMulti" 
                       ? "bg-purple-600 text-white shadow-lg shadow-purple-900/50" 
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
-                    {/* --- ÍCONE SUBSTITUÍDO AQUI --- */}
                     <i className="fa-solid fa-people-line w-5 h-5 flex items-center justify-center"></i>
                     <span className="font-medium">Equipe eMulti</span>
                   </button>
 
                   <button 
-                    onClick={() => {setActiveTab("Bucal"); setSelectedCategory("Todos")}}
+                    onClick={() => {setActiveTab("Bucal"); setSelectedCategory("Todos"); setSearchTerm("");}}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                       activeTab === "Bucal" 
                       ? "bg-teal-600 text-white shadow-lg shadow-teal-900/50" 
@@ -725,55 +725,71 @@
                     </h1>
                   </div>
                   <div className="flex gap-2 overflow-x-auto pb-2">
-                     <button 
-                       onClick={() => setActiveTab("APS")} 
-                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "APS" ? "bg-indigo-600" : "bg-slate-800"}`}
-                     >APS</button>
-                     <button 
-                       onClick={() => setActiveTab("ACS")} 
-                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "ACS" ? "bg-orange-600" : "bg-slate-800"}`}
-                     >ACS</button>
-                     <button 
-                       onClick={() => setActiveTab("eMulti")} 
-                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "eMulti" ? "bg-purple-600" : "bg-slate-800"}`}
-                     >eMulti</button>
-                     <button 
-                       onClick={() => setActiveTab("Bucal")} 
-                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "Bucal" ? "bg-teal-600" : "bg-slate-800"}`}
-                     >S. Bucal</button>
+                      <button 
+                        onClick={() => {setActiveTab("APS"); setSearchTerm("");}} 
+                        className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "APS" ? "bg-indigo-600" : "bg-slate-800"}`}
+                      >APS</button>
+                      <button 
+                        onClick={() => {setActiveTab("ACS"); setSearchTerm("");}} 
+                        className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "ACS" ? "bg-orange-600" : "bg-slate-800"}`}
+                      >ACS</button>
+                      <button 
+                        onClick={() => {setActiveTab("eMulti"); setSearchTerm("");}} 
+                        className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "eMulti" ? "bg-purple-600" : "bg-slate-800"}`}
+                      >eMulti</button>
+                      <button 
+                        onClick={() => {setActiveTab("Bucal"); setSearchTerm("");}} 
+                        className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "Bucal" ? "bg-teal-600" : "bg-slate-800"}`}
+                      >S. Bucal</button>
                   </div>
                 </div>
 
                 <div className="p-6 md:p-10 max-w-6xl mx-auto">
                   
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+                  <div className="mb-8">
+                    <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
                         {headerTitle}
-                      </h2>
-                      <p className="text-slate-500 mt-1">
+                    </h2>
+                    <p className="text-slate-500 mt-1">
                         {headerSubtitle}
-                      </p>
-                    </div>
-                    
-                    {/* Filtros de Categoria */}
-                    <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
-                      {categories.map(cat => (
-                        <button
-                          key={cat}
-                          onClick={() => setSelectedCategory(cat)}
-                          className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
-                            selectedCategory === cat 
-                              ? "bg-indigo-100 text-indigo-700 border-indigo-200" 
-                              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
+                    </p>
                   </div>
 
+                  {/* --- NOVA BARRA DE BUSCA E FILTROS --- */}
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 w-full mb-6">
+                    
+                    {/* Campo de Busca */}
+                    <div className="relative w-full md:w-72">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Icon name="Search" className="h-4 w-4 text-slate-400" />
+                        </span>
+                        <input
+                        type="text"
+                        placeholder="Buscar (ex: Pressão, C1...)"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out shadow-sm"
+                        />
+                    </div>
+
+                    {/* Filtros de Categoria */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 max-w-full scrollbar-hide">
+                        {categories.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors border ${
+                            selectedCategory === cat 
+                                ? "bg-indigo-100 text-indigo-700 border-indigo-200" 
+                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                            }`}
+                        >
+                            {cat}
+                        </button>
+                        ))}
+                    </div>
+                  </div>
+                  
                   {/* Grid de Cards */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {filteredIndicators.map((indicator) => (
