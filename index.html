@@ -1,864 +1,892 @@
-import React, { useState } from 'react';
-import { 
-  Target, 
-  FileText, 
-  CheckCircle2, 
-  ListChecks,
-  Info,
-  ExternalLink,
-  Users,
-  Menu,
-  Activity,
-  Baby,
-  HeartPulse,
-  Stethoscope,
-  ShieldPlus,
-  Accessibility,
-  Smile,
-  MapPinned,
-  ClipboardCheck,
-  UserCheck,
-  Sticker,
-  Briefcase,
-  FileSpreadsheet
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor SUS - Painel de Metas 2025</title>
+    
+    <!-- Tailwind CSS (Estilos) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM (Motor do App) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel (Tradutor de código) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-// --- DADOS INDICADORES CADASTRO & ACS (NT 30/2025) - COM DETALHES TÉCNICOS ---
-const acsIndicators = [
-  {
-    id: "CAD1",
-    code: "Peso do Cadastro",
-    title: "Qualidade do Cadastro",
-    icon: MapPinned,
-    category: "Cadastro",
-    targetDescription: "Peso 1.5 (Completo)",
-    unit: "pontos/pessoa",
-    description: "Define o peso da pessoa no cálculo do financiamento baseado na completude do cadastro.",
-    requirements: [
-      { title: "Peso 1.5 (Máximo)", text: "Cidadão com Cadastro Individual (CPF/CNS) + Cadastro Domiciliar vinculados." },
-      { title: "Peso 0.75 (Parcial)", text: "Cidadão apenas com Cadastro Individual (sem vínculo domiciliar)." },
-      { title: "Inválido", text: "Cadastros simplificados/rápidos não contam para o indicador." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Realizar Cadastro Domiciliar (Vincular imóvel ao território)",
-        "Realizar Cadastro Individual (Vincular cidadão ao imóvel)",
-        "Vincular Responsável Familiar"
-      ],
-      cbos: [
-        "Agente Comunitário de Saúde - ACS (5151)",
-        "Agente de Combate a Endemias - ACE (CBO 5151-F1 - se integrado)",
-        "Enfermeiro/Médico (Para Cadastro Individual apenas)"
-      ],
-      forms: [
-        "Ficha de Cadastro Domiciliar e Territorial (e-SUS)",
-        "Ficha de Cadastro Individual (e-SUS)"
-      ]
-    }
-  },
-  {
-    id: "CAD2",
-    code: "Validade",
-    title: "Atualização Cadastral",
-    icon: ClipboardCheck,
-    category: "Cadastro",
-    targetDescription: "24 Meses",
-    unit: "validade",
-    description: "Regras de saneamento e validade temporal dos registros no banco de dados.",
-    requirements: [
-      { title: "Regra dos 2 Anos", text: "Cadastros não atualizados há mais de 24 meses são desconsiderados." },
-      { title: "Saneamento", text: "Cadastros marcados como 'Mudança de Território' ou 'Óbito' não contam." },
-      { title: "Duplicidade", text: "Em caso de múltiplos cadastros, vale o da equipe onde houve atendimento mais recente." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Visita Domiciliar para atualização de dados",
-        "Edição de cadastro no atendimento na unidade (Recepção/Consultório)"
-      ],
-      cbos: [
-        "Agente Comunitário de Saúde - ACS (Visita)",
-        "Qualquer profissional da equipe (Na unidade)"
-      ],
-      forms: [
-        "Ficha de Visita Domiciliar (Campo: Motivo da Visita -> Atualização Cadastral)",
-        "Ficha de Cadastro Individual (Editar e Salvar)"
-      ]
-    }
-  },
-  {
-    id: "VINC1",
-    code: "Vínculo",
-    title: "Acompanhamento (Vínculo)",
-    icon: Users,
-    category: "Acompanhamento",
-    targetDescription: "Peso até 2.5",
-    unit: "ponderação",
-    description: "Antiga 'Capitação Ponderada'. Define quanto vale cada pessoa acompanhada baseada na vulnerabilidade.",
-    requirements: [
-      { title: "Quem é 'Acompanhado'?", text: "Pessoa com mais de 1 contato assistencial nos últimos 12 meses." },
-      { title: "Peso Base (1.0)", text: "Pessoa sem critérios de vulnerabilidade." },
-      { title: "Peso Intermediário (1.2/1.3)", text: "Crianças/Idosos (x1.2) OU Beneficiários Bolsa Família/BPC (x1.3)." },
-      { title: "Peso Máximo (2.5)", text: "Criança/Idoso QUE TAMBÉM RECEBE Bolsa Família ou BPC." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Consulta Médica / Enfermagem / Odonto",
-        "Vacinação",
-        "Visita Domiciliar",
-        "Procedimentos (Aferição PA, Curativo, etc)"
-      ],
-      cbos: [
-        "Médicos, Enfermeiros, Dentistas",
-        "Técnicos de Enfermagem / Saúde Bucal",
-        "ACS (Visita conta como contato assistencial)"
-      ],
-      forms: [
-        "MIAI, MIAOI, Ficha de Vacinação",
-        "Ficha de Procedimentos",
-        "Ficha de Visita Domiciliar (MIVDT)"
-      ]
-    }
-  },
-  {
-    id: "VINC2",
-    code: "Satisfação",
-    title: "Avaliação do Usuário",
-    icon: UserCheck,
-    category: "Acompanhamento",
-    targetDescription: "+ 0.30 pts",
-    unit: "bônus",
-    description: "Pontuação extra baseada na avaliação do atendimento pelo cidadão no app 'Meu SUS Digital'.",
-    requirements: [
-      { title: "Bônus Pequeno (+0.15)", text: "Se menos de 5% dos atendimentos forem avaliados." },
-      { title: "Bônus Máximo (+0.30)", text: "Se 5% ou mais dos atendimentos da equipe forem avaliados." },
-      { title: "Nota", text: "Não importa se a avaliação é positiva ou negativa, apenas se foi feita." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Incentivar o usuário a baixar o app 'Meu SUS Digital'",
-        "Avaliar o atendimento após a consulta/visita"
-      ],
-      cbos: [
-        "Todos os profissionais da equipe (Divulgação)"
-      ],
-      forms: [
-        "Aplicativo 'Meu SUS Digital' (Cidadão)"
-      ]
-    }
-  }
-];
+    <!-- Lucide Icons (Ícones) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body { background-color: #f8fafc; }
+        /* Ajuste para barra de rolagem */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-// --- DADOS INDICADORES EMULTI (M1, M2) ---
-const eMultiIndicators = [
-  {
-    id: "M1",
-    code: "M1",
-    title: "Média de Atendimentos eMulti",
-    category: "Acesso eMulti",
-    targetDescription: "Maior que 3,0",
-    unit: "atend/pessoa",
-    description: "Mensura a média de atendimentos por pessoa realizados pela equipe Multiprofissional.",
-    requirements: [
-      { title: "Meta", text: "Garantir que a equipe realize um volume adequado de atendimentos em relação à população assistida." },
-      { title: "Regra", text: "Evitar duplicidade: Se o mesmo paciente for atendido 2x no mesmo dia pelo mesmo profissional, conta só 1." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Atendimento Individual (Presencial, Domiciliar ou Remoto)",
-        "Atividade Coletiva (Educação em Saúde, Grupo, Práticas Corporais)",
-        "Atendimentos Compartilhados (contam para cada profissional)"
-      ],
-      cbos: [
-        "Nutricionista (2237)", "Fisioterapeuta (2236)", "Psicólogo (2515)", 
-        "Assistente Social (2516)", "Fonoaudiólogo (2238)", "Farmacêutico (2234)", 
-        "Terapeuta Ocupacional (2239)", "Prof. Ed. Física (2241)", "Arte Educador (5153)", 
-        "Sanitarista (1312)", "Médicos Especialistas (Cardio, Dermato, Psiquiatra, etc)"
-      ],
-      forms: [
-        "Ficha de Atendimento Individual (e-SUS)",
-        "Ficha de Atividade Coletiva (e-SUS)"
-      ]
-    }
-  },
-  {
-    id: "M2",
-    code: "M2",
-    title: "Ações Interprofissionais",
-    category: "Trabalho Colaborativo",
-    targetDescription: "Maior que 5%",
-    unit: "% ações",
-    description: "Proporção de ações realizadas de forma compartilhada (matriciamento, consultas conjuntas).",
-    requirements: [
-      { title: "Regra de Ouro", text: "Ação deve ter SIMULTANEAMENTE no mínimo 2 profissionais de CNS diferentes." },
-      { title: "Obrigatório", text: "Pelo menos 1 dos profissionais DEVE ser da eMulti (CBO listado)." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Consulta Compartilhada (2 profissionais ao mesmo tempo)",
-        "Atividade Coletiva com tema 'Discussão de Caso/Projeto Terapêutico Singular (PTS)'",
-        "Reunião de Matriciamento entre equipes",
-        "Resposta a solicitação de interconsulta no PEC (Módulo Compartilhamento)"
-      ],
-      cbos: [
-        "Obrigatório: 1 Profissional eMulti (Nutri, Psico, Fisio, etc)",
-        "+",
-        "1 Profissional de qualquer equipe (Médico, Enf, Dentista, ACS, Tec. Enf)"
-      ],
-      forms: [
-        "Ficha de Atendimento Individual (Adicionar profissional participante)",
-        "Ficha de Atividade Coletiva (Marcar tema: Discussão de Caso/PTS - Cód 05)",
-        "Prontuário Eletrônico (PEC) - Módulo Compartilhamento de Cuidado"
-      ]
-    }
-  }
-];
+    <!-- AQUI COMEÇA O CÓDIGO DO SISTEMA -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-// --- DADOS INDICADORES APS (C1 a C7) ---
-const apsIndicators = [
-  {
-    id: "C1",
-    code: "C1",
-    title: "Mais Acesso à APS",
-    icon: Accessibility,
-    category: "Acesso",
-    targetDescription: "> 50%",
-    description: "Percentual de atendimentos de demanda programada em relação ao total.",
-    requirements: [
-      { title: "Numerador", text: "Atendimentos de demanda programada (Consulta agendada, Cuidado continuado)." },
-      { title: "Denominador", text: "Total de atendimentos (Programados + Espontâneos)." },
-      { title: "Objetivo", text: "Equilibrar a oferta entre urgências e cuidado continuado/preventivo." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Consulta Agendada Programada",
-        "Cuidado Continuado/Programado"
-      ],
-      cbos: [
-        "Médico da Estratégia de Saúde da Família (2251)",
-        "Enfermeiro da Estratégia de Saúde da Família (2235)"
-      ],
-      forms: [
-        "Ficha de Atendimento Individual (Campo: Tipo de Atendimento)"
-      ]
-    }
-  },
-  {
-    id: "C2",
-    code: "C2",
-    title: "Desenvolvimento Infantil",
-    icon: Baby,
-    category: "Saúde da Criança",
-    targetDescription: "> 75%",
-    description: "Monitoramento integral de crianças até 2 anos.",
-    requirements: [
-      { title: "Vacinação", text: "Penta (3ª dose), VIP (3ª dose) antes de 1 ano." },
-      { title: "Consultas", text: "7 Consultas de Puericultura (Méd/Enf) até 2 anos." },
-      { title: "Visitas", text: "1ª semana e rotina (ACS)." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Consulta de Puericultura (Cód: 03.01.01.007-2)",
-        "Vacinação (Penta, VIP, Pneumo 10, SCR)",
-        "Visita Domiciliar (1ª semana e rotina)"
-      ],
-      cbos: [
-        "Médico (2251) / Enfermeiro (2235) para consultas",
-        "Técnico de Enfermagem (3222) para vacinas",
-        "ACS (5151) para visitas"
-      ],
-      forms: [
-        "Ficha de Atendimento Individual (MIAI)",
-        "Ficha de Vacinação (MIV)",
-        "Ficha de Visita Domiciliar (MIVDT)"
-      ]
-    }
-  },
-  {
-    id: "C3",
-    code: "C3",
-    title: "Gestação e Puerpério",
-    icon: HeartPulse,
-    category: "Saúde da Mulher",
-    targetDescription: "> 75%",
-    description: "Cuidado longitudinal da gestante e puérpera.",
-    requirements: [
-      { title: "Captação", text: "1ª consulta até a 12ª semana." },
-      { title: "Exames", text: "Sífilis/HIV solicitados no 1º e 3º trimestre." },
-      { title: "Odonto", text: "Consulta odontológica programática." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Consulta Pré-natal (03.01.01.011-0)",
-        "Consulta Puerperal (até 42 dias)",
-        "Testes Rápidos (Sífilis/HIV) ou Sorologias",
-        "Atendimento Odontológico à Gestante"
-      ],
-      cbos: [
-        "Médico (2251) / Enfermeiro (2235)",
-        "Cirurgião-Dentista (2232)",
-        "ACS (Visita)"
-      ],
-      forms: [
-        "MIAI (Marcar 'Gestante' e DUM correta)",
-        "MIAOI (Odonto)",
-        "Ficha de Procedimentos (Testes Rápidos)"
-      ]
-    }
-  },
-  {
-    id: "C4",
-    code: "C4",
-    title: "Cuidado com Diabetes",
-    icon: Stethoscope,
-    category: "Crônicas",
-    targetDescription: "> 75%",
-    description: "Acompanhamento de pessoas com Diabetes.",
-    requirements: [
-      { title: "Monitoramento", text: "Consulta + Hemoglobina Glicada (semestral)." },
-      { title: "PA", text: "Aferição de Pressão Arterial (semestral)." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Consulta Médica/Enfermagem (Monitoramento)",
-        "Solicitação de Hemoglobina Glicada (Cód: 02.02.01.050-3)",
-        "Aferição de PA (03.01.10.003-9)",
-        "Avaliação de Pé Diabético (03.01.04.009-5)"
-      ],
-      cbos: [
-        "Médico (2251) / Enfermeiro (2235)",
-        "Técnico de Enfermagem (PA)"
-      ],
-      forms: [
-        "MIAI (Registro da consulta + CID/CIAP de Diabetes)",
-        "Ficha de Procedimentos (Aferição PA)"
-      ]
-    }
-  },
-  {
-    id: "C5",
-    code: "C5",
-    title: "Cuidado com Hipertensão",
-    icon: Stethoscope,
-    category: "Crônicas",
-    targetDescription: "> 75%",
-    description: "Acompanhamento de pessoas com Hipertensão.",
-    requirements: [
-      { title: "Consulta", text: "Pelo menos 1 consulta (Médico/Enf) nos últimos 6 meses." },
-      { title: "Pressão Arterial", text: "Aferição obrigatória a cada 6 meses." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Consulta Médica/Enfermagem",
-        "Aferição de Pressão Arterial (Cód: 03.01.10.003-9)"
-      ],
-      cbos: [
-        "Médico (2251) / Enfermeiro (2235)",
-        "Técnico de Enfermagem (Aferição PA)"
-      ],
-      forms: [
-        "MIAI (Registro da consulta + CID/CIAP de Hipertensão)",
-        "Ficha de Procedimentos (Aferição PA)"
-      ]
-    }
-  },
-  {
-    id: "C6",
-    code: "C6",
-    title: "Cuidado da Pessoa Idosa",
-    icon: Users,
-    category: "Idosos",
-    targetDescription: "> 75%",
-    description: "Atenção integral à saúde da pessoa com 60 anos ou mais.",
-    requirements: [
-      { title: "Vacinação", text: "Registro de vacina Influenza/Polio." },
-      { title: "Antropometria", text: "Peso e altura simultâneos nos últimos 12 meses." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Vacinação (Campanha ou Rotina)",
-        "Aferição de Pressão Arterial",
-        "Medição de Peso e Altura",
-        "Consulta Médica/Enfermagem (Avaliação Multidimensional)"
-      ],
-      cbos: [
-        "Médico / Enfermeiro (Consulta)",
-        "Técnico de Enfermagem (Vacina/Dados vitais)",
-        "ACS (Visita)"
-      ],
-      forms: [
-        "Ficha de Vacinação",
-        "MIAI (Consulta)",
-        "Ficha de Procedimentos (Peso/Altura/PA)"
-      ]
-    }
-  },
-  {
-    id: "C7",
-    code: "C7",
-    title: "Prevenção do Câncer",
-    icon: ShieldPlus,
-    category: "Saúde da Mulher",
-    targetDescription: "> 75%",
-    description: "Rastreamento de câncer de colo de útero e mama.",
-    requirements: [
-      { title: "Citopatológico", text: "Mulheres 25-64 anos (a cada 3 anos)." },
-      { title: "Mamografia", text: "Mulheres 50-69 anos (a cada 2 anos)." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "Coleta de Citopatológico (Cód: 02.01.02.003-3)",
-        "Solicitação de Mamografia Bilateral (Cód: 02.04.03.018-8)"
-      ],
-      cbos: [
-        "Enfermeiro (Coleta Cito)",
-        "Médico (Coleta Cito / Solicitação Mamografia)"
-      ],
-      forms: [
-        "MIAI (Campo: Exames Solicitados/Avaliados)",
-        "Ficha de Procedimentos (Registro da Coleta)"
-      ]
-    }
-  }
-];
-
-// --- DADOS INDICADORES SAÚDE BUCAL (B1 a B6) ---
-const oralHealthIndicators = [
-  {
-    id: "B1",
-    code: "B1",
-    title: "Primeira Consulta Programada",
-    icon: Smile,
-    category: "Acesso",
-    targetDescription: "> 5%",
-    unit: "% cobertura",
-    description: "Cobertura de primeira consulta odontológica programática em relação à população adscrita.",
-    requirements: [
-      { title: "Numerador", text: "Pessoas com 1ª consulta programática (Cód 03.01.01.015-3)." },
-      { title: "Regra", text: "Usuário contabilizado apenas 1 vez a cada 12 meses para o mesmo dentista." }
-    ],
-    technicalDetails: {
-      procedures: ["03.01.01.015-3 - Primeira Consulta Odontológica Programática"],
-      cbos: [
-        "Cirurgião-Dentista ESF (2232-93)", 
-        "Cirurgião-Dentista Clínico Geral (2232-08)",
-        "Cirurgião-Dentista Saúde Coletiva (2232-72)"
-      ],
-      forms: ["Ficha de Atendimento Odontológico Individual (MIAOI) -> Campo: Tipo de Consulta"]
-    }
-  },
-  {
-    id: "B2",
-    code: "B2",
-    title: "Tratamento Concluído",
-    icon: Smile,
-    category: "Resolutividade",
-    targetDescription: "> 75%",
-    unit: "% conclusão",
-    description: "Percentual de tratamentos concluídos em relação às primeiras consultas programáticas.",
-    requirements: [
-      { title: "Numerador", text: "Pessoas com tratamento concluído (Conduta: Tratamento Concluído)." },
-      { title: "Denominador", text: "Total de primeiras consultas odontológicas programáticas." }
-    ],
-    technicalDetails: {
-      procedures: ["Registro de fim de tratamento no plano terapêutico"],
-      cbos: ["Cirurgião-Dentista (2232-93, 2232-08, 2232-72)"],
-      forms: ["MIAOI -> Campo Conduta: Selecionar 'Tratamento Concluído'"]
-    }
-  },
-  {
-    id: "B3",
-    code: "B3",
-    title: "Taxa de Exodontia",
-    icon: Smile,
-    category: "Curativo",
-    targetDescription: "8% a 10%",
-    unit: "% exodontias",
-    description: "Proporção de extrações dentárias em relação ao total de procedimentos individuais.",
-    requirements: [
-      { title: "Numerador", text: "Exodontias de dentes permanentes (simples ou com alveoloplastia)." },
-      { title: "Denominador", text: "Total de procedimentos preventivos + curativos + exodontias." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "04.14.02.013-8 - Exodontia de dente permanente",
-        "04.14.02.014-6 - Exodontia múltipla com alveoloplastia por sextante"
-      ],
-      cbos: ["Cirurgião-Dentista (2232)"],
-      forms: ["MIAOI -> Adicionar procedimento pelo código SIGTAP"]
-    }
-  },
-  {
-    id: "B4",
-    code: "B4",
-    title: "Escovação Supervisionada",
-    icon: Smile,
-    category: "Coletivo",
-    targetDescription: "> 100%",
-    unit: "cobertura",
-    description: "Proporção de crianças (6-12 anos) beneficiadas com escovação supervisionada.",
-    requirements: [
-      { title: "Público", text: "Crianças de 6 a 12 anos vinculadas à equipe." },
-      { title: "Ação", text: "Ação Coletiva de Escovação Dental Supervisionada." }
-    ],
-    technicalDetails: {
-      procedures: ["01.01.02.003-1 - Ação Coletiva de Escovação Dental Supervisionada"],
-      cbos: [
-        "Cirurgião-Dentista (2232)",
-        "Técnico em Saúde Bucal - TSB (3224-05, 3224-25)",
-        "Auxiliar em Saúde Bucal - ASB (3224-15, 3224-30)"
-      ],
-      forms: ["Ficha de Atividade Coletiva -> Tipo: Educação em Saúde -> Prática: Escovação Dental Supervisionada"]
-    }
-  },
-  {
-    id: "B5",
-    code: "B5",
-    title: "Procedimentos Preventivos",
-    icon: Smile,
-    category: "Preventivo",
-    targetDescription: "80% a 85%",
-    unit: "% preventivos",
-    description: "Proporção de procedimentos preventivos individuais em relação ao total de procedimentos.",
-    requirements: [
-      { title: "Numerador", text: "Ações como selante, flúor, evidenciação de placa, orientação de higiene." },
-      { title: "Meta", text: "Foco na prevenção. Parâmetro Ótimo entre 80% e 85%." }
-    ],
-    technicalDetails: {
-      procedures: [
-        "01.01.02.006-6 - Aplicação de selante",
-        "01.01.02.007-4 - Aplicação tópica de flúor",
-        "01.01.02.008-2 - Evidenciação de placa bacteriana",
-        "01.01.02.010-4 - Orientação de higiene bucal",
-        "01.01.02.005-8 - Aplicação de cariostático",
-        "01.01.02.009-0 - Selamento provisório"
-      ],
-      cbos: ["Cirurgião-Dentista (2232)", "Técnico em Saúde Bucal (3224)"],
-      forms: ["MIAOI -> Registro de Procedimentos"]
-    }
-  },
-  {
-    id: "B6",
-    code: "B6",
-    title: "Tratamento Restaurador (ART)",
-    icon: Smile,
-    category: "Curativo",
-    targetDescription: "> 8%",
-    unit: "% ART",
-    description: "Proporção de Tratamento Restaurador Atraumático (ART) em relação aos procedimentos restauradores.",
-    requirements: [
-      { title: "Técnica", text: "Minimamente invasiva, sem uso de 'motorzinho', usando ionômero de vidro." },
-      { title: "Numerador", text: "Procedimentos de ART (Cód 03.07.01.007-4)." }
-    ],
-    technicalDetails: {
-      procedures: ["03.07.01.007-4 - Tratamento Restaurador Atraumático (TRA/ART)"],
-      cbos: ["Cirurgião-Dentista (2232)"],
-      forms: ["MIAOI -> Adicionar procedimento"]
-    }
-  }
-];
-
-const App = () => {
-  const [activeTab, setActiveTab] = useState("ACS"); // 'APS', 'eMulti', 'Bucal', 'ACS'
-  const [selectedCategory, setSelectedCategory] = useState("Todos");
-
-  let currentIndicators = [];
-  let headerTitle = "";
-  let headerSubtitle = "";
-  let headerIcon = Activity;
-  let headerColorClass = "bg-blue-100 text-blue-600";
-
-  switch(activeTab) {
-    case "APS":
-      currentIndicators = apsIndicators;
-      headerTitle = "Atenção Primária";
-      headerSubtitle = "Indicadores de Desempenho (C1-C7)";
-      headerIcon = Users;
-      headerColorClass = "bg-blue-100 text-blue-600";
-      break;
-    case "eMulti":
-      currentIndicators = eMultiIndicators;
-      headerTitle = "Equipe eMulti";
-      headerSubtitle = "Indicadores Multiprofissionais (M1-M2)";
-      headerIcon = ListChecks;
-      headerColorClass = "bg-purple-100 text-purple-600";
-      break;
-    case "Bucal":
-      currentIndicators = oralHealthIndicators;
-      headerTitle = "Saúde Bucal";
-      headerSubtitle = "Indicadores Odontológicos (B1-B6)";
-      headerIcon = Smile;
-      headerColorClass = "bg-teal-100 text-teal-600";
-      break;
-    case "ACS":
-      currentIndicators = acsIndicators;
-      headerTitle = "Cadastro & ACS";
-      headerSubtitle = "Vínculo e Território (Nota Técnica 30/2025)";
-      headerIcon = MapPinned;
-      headerColorClass = "bg-orange-100 text-orange-600";
-      break;
-    default:
-      currentIndicators = apsIndicators;
-  }
-  
-  const categories = ["Todos", ...new Set(currentIndicators.map(i => i.category))];
-  
-  const filteredIndicators = selectedCategory === "Todos" 
-    ? currentIndicators 
-    : currentIndicators.filter(i => i.category === selectedCategory);
-
-  return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
-      
-      {/* Sidebar de Navegação */}
-      <aside className="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <Activity className="text-indigo-400" />
-            Gestor SUS
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">Painel de Metas 2025</p>
-        </div>
-
-        <nav className="p-4 space-y-2 flex-1">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">
-            Módulos de Gestão
-          </div>
-          
-          <button 
-            onClick={() => {setActiveTab("APS"); setSelectedCategory("Todos")}}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-              activeTab === "APS" 
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" 
-              : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            <Users className="w-5 h-5" />
-            <span className="font-medium">Atenção Primária</span>
-          </button>
-
-          <button 
-            onClick={() => {setActiveTab("ACS"); setSelectedCategory("Todos")}}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-              activeTab === "ACS" 
-              ? "bg-orange-600 text-white shadow-lg shadow-orange-900/50" 
-              : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            <MapPinned className="w-5 h-5" />
-            <span className="font-medium">Cadastro & ACS</span>
-          </button>
-
-          <button 
-            onClick={() => {setActiveTab("eMulti"); setSelectedCategory("Todos")}}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-              activeTab === "eMulti" 
-              ? "bg-purple-600 text-white shadow-lg shadow-purple-900/50" 
-              : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            <ListChecks className="w-5 h-5" />
-            <span className="font-medium">Equipe eMulti</span>
-          </button>
-
-          <button 
-            onClick={() => {setActiveTab("Bucal"); setSelectedCategory("Todos")}}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-              activeTab === "Bucal" 
-              ? "bg-teal-600 text-white shadow-lg shadow-teal-900/50" 
-              : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            <Smile className="w-5 h-5" />
-            <span className="font-medium">Saúde Bucal</span>
-          </button>
-        </nav>
-
-        <div className="p-4 bg-slate-950 text-xs text-slate-500">
-          Baseado nas Notas Técnicas 2024/2025
-        </div>
-      </aside>
-
-      {/* Conteúdo Principal */}
-      <main className="flex-1 overflow-y-auto h-screen">
-        {/* Mobile Header */}
-        <div className="md:hidden bg-slate-900 text-white p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="font-bold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-indigo-400" />
-              Gestor SUS
-            </h1>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-             <button 
-               onClick={() => setActiveTab("APS")} 
-               className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "APS" ? "bg-indigo-600" : "bg-slate-800"}`}
-             >APS</button>
-             <button 
-               onClick={() => setActiveTab("ACS")} 
-               className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "ACS" ? "bg-orange-600" : "bg-slate-800"}`}
-             >ACS</button>
-             <button 
-               onClick={() => setActiveTab("eMulti")} 
-               className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "eMulti" ? "bg-purple-600" : "bg-slate-800"}`}
-             >eMulti</button>
-             <button 
-               onClick={() => setActiveTab("Bucal")} 
-               className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "Bucal" ? "bg-teal-600" : "bg-slate-800"}`}
-             >S. Bucal</button>
-          </div>
-        </div>
-
-        <div className="p-6 md:p-10 max-w-6xl mx-auto">
-          
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-                {headerTitle}
-              </h2>
-              <p className="text-slate-500 mt-1">
-                {headerSubtitle}
-              </p>
-            </div>
+        // Componente para Ícones (já que não podemos usar import no navegador)
+        const Icon = ({ name, className }) => {
+            const iconName = name || 'Circle'; // Fallback
             
-            {/* Filtros de Categoria */}
-            <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
-                    selectedCategory === cat 
-                      ? "bg-indigo-100 text-indigo-700 border-indigo-200" 
-                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name]);
 
-          {/* Grid de Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredIndicators.map((indicator) => (
-              <div 
-                key={indicator.id}
-                className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 group"
-              >
-                {/* Header do Card */}
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className={`w-10 h-10 rounded-lg flex items-center justify-center ${headerColorClass}`}>
-                        {indicator.icon ? <indicator.icon className="w-6 h-6" /> : <Target className="w-6 h-6" />}
-                      </span>
-                      <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                          {indicator.code}
-                        </span>
-                        <h3 className="text-xl font-bold text-slate-800 leading-tight">
-                          {indicator.title}
-                        </h3>
-                      </div>
-                    </div>
-                    <div className="bg-white px-3 py-1 rounded-full border border-emerald-100 shadow-sm flex flex-col items-end">
-                       <span className="text-[10px] text-slate-400 font-bold uppercase">Meta / Peso</span>
-                       <span className="text-lg font-black text-emerald-600 whitespace-nowrap">{indicator.targetDescription}</span>
-                    </div>
-                  </div>
-                  <p className="text-slate-600 text-sm leading-relaxed">
-                    {indicator.description}
-                  </p>
+            return <i data-lucide={iconName.toLowerCase().replace(/([a-z0-9])([A-Z])/g, '$1-$2')} className={className}></i>;
+        };
+
+        // --- DADOS INDICADORES CADASTRO & ACS (NT 30/2025) ---
+        const acsIndicators = [
+          {
+            id: "CAD1",
+            code: "Peso do Cadastro",
+            title: "Qualidade do Cadastro",
+            iconName: "MapPinned",
+            category: "Cadastro",
+            targetDescription: "Peso 1.5 (Completo)",
+            unit: "pontos/pessoa",
+            description: "Define o peso da pessoa no cálculo do financiamento baseado na completude do cadastro.",
+            requirements: [
+              { title: "Peso 1.5 (Máximo)", text: "Cidadão com Cadastro Individual (CPF/CNS) + Cadastro Domiciliar vinculados." },
+              { title: "Peso 0.75 (Parcial)", text: "Cidadão apenas com Cadastro Individual (sem vínculo domiciliar)." },
+              { title: "Inválido", text: "Cadastros simplificados/rápidos não contam para o indicador." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Realizar Cadastro Domiciliar (Vincular imóvel ao território)",
+                "Realizar Cadastro Individual (Vincular cidadão ao imóvel)",
+                "Vincular Responsável Familiar"
+              ],
+              cbos: [
+                "Agente Comunitário de Saúde - ACS (5151)",
+                "Agente de Combate a Endemias - ACE (CBO 5151-F1 - se integrado)",
+                "Enfermeiro/Médico (Para Cadastro Individual apenas)"
+              ],
+              forms: [
+                "Ficha de Cadastro Domiciliar e Territorial (e-SUS)",
+                "Ficha de Cadastro Individual (e-SUS)"
+              ]
+            }
+          },
+          {
+            id: "CAD2",
+            code: "Validade",
+            title: "Atualização Cadastral",
+            iconName: "ClipboardCheck",
+            category: "Cadastro",
+            targetDescription: "24 Meses",
+            unit: "validade",
+            description: "Regras de saneamento e validade temporal dos registros no banco de dados.",
+            requirements: [
+              { title: "Regra dos 2 Anos", text: "Cadastros não atualizados há mais de 24 meses são desconsiderados." },
+              { title: "Saneamento", text: "Cadastros marcados como 'Mudança de Território' ou 'Óbito' não contam." },
+              { title: "Duplicidade", text: "Em caso de múltiplos cadastros, vale o da equipe onde houve atendimento mais recente." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Visita Domiciliar para atualização de dados",
+                "Edição de cadastro no atendimento na unidade (Recepção/Consultório)"
+              ],
+              cbos: [
+                "Agente Comunitário de Saúde - ACS (Visita)",
+                "Qualquer profissional da equipe (Na unidade)"
+              ],
+              forms: [
+                "Ficha de Visita Domiciliar (Campo: Motivo da Visita -> Atualização Cadastral)",
+                "Ficha de Cadastro Individual (Editar e Salvar)"
+              ]
+            }
+          },
+          {
+            id: "VINC1",
+            code: "Vínculo",
+            title: "Acompanhamento (Vínculo)",
+            iconName: "Users",
+            category: "Acompanhamento",
+            targetDescription: "Peso até 2.5",
+            unit: "ponderação",
+            description: "Antiga 'Capitação Ponderada'. Define quanto vale cada pessoa acompanhada baseada na vulnerabilidade.",
+            requirements: [
+              { title: "Quem é 'Acompanhado'?", text: "Pessoa com mais de 1 contato assistencial nos últimos 12 meses." },
+              { title: "Peso Base (1.0)", text: "Pessoa sem critérios de vulnerabilidade." },
+              { title: "Peso Intermediário (1.2/1.3)", text: "Crianças/Idosos (x1.2) OU Beneficiários Bolsa Família/BPC (x1.3)." },
+              { title: "Peso Máximo (2.5)", text: "Criança/Idoso QUE TAMBÉM RECEBE Bolsa Família ou BPC." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Consulta Médica / Enfermagem / Odonto",
+                "Vacinação",
+                "Visita Domiciliar",
+                "Procedimentos (Aferição PA, Curativo, etc)"
+              ],
+              cbos: [
+                "Médicos, Enfermeiros, Dentistas",
+                "Técnicos de Enfermagem / Saúde Bucal",
+                "ACS (Visita conta como contato assistencial)"
+              ],
+              forms: [
+                "MIAI, MIAOI, Ficha de Vacinação",
+                "Ficha de Procedimentos",
+                "Ficha de Visita Domiciliar (MIVDT)"
+              ]
+            }
+          },
+          {
+            id: "VINC2",
+            code: "Satisfação",
+            title: "Avaliação do Usuário",
+            iconName: "UserCheck",
+            category: "Acompanhamento",
+            targetDescription: "+ 0.30 pts",
+            unit: "bônus",
+            description: "Pontuação extra baseada na avaliação do atendimento pelo cidadão no app 'Meu SUS Digital'.",
+            requirements: [
+              { title: "Bônus Pequeno (+0.15)", text: "Se menos de 5% dos atendimentos forem avaliados." },
+              { title: "Bônus Máximo (+0.30)", text: "Se 5% ou mais dos atendimentos da equipe forem avaliados." },
+              { title: "Nota", text: "Não importa se a avaliação é positiva ou negativa, apenas se foi feita." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Incentivar o usuário a baixar o app 'Meu SUS Digital'",
+                "Avaliar o atendimento após a consulta/visita"
+              ],
+              cbos: [
+                "Todos os profissionais da equipe (Divulgação)"
+              ],
+              forms: [
+                "Aplicativo 'Meu SUS Digital' (Cidadão)"
+              ]
+            }
+          }
+        ];
+
+        // --- DADOS INDICADORES EMULTI (M1, M2) ---
+        const eMultiIndicators = [
+          {
+            id: "M1",
+            code: "M1",
+            title: "Média de Atendimentos eMulti",
+            category: "Acesso eMulti",
+            targetDescription: "Maior que 3,0",
+            unit: "atend/pessoa",
+            description: "Mensura a média de atendimentos por pessoa realizados pela equipe Multiprofissional.",
+            requirements: [
+              { title: "Meta", text: "Garantir que a equipe realize um volume adequado de atendimentos em relação à população assistida." },
+              { title: "Regra", text: "Evitar duplicidade: Se o mesmo paciente for atendido 2x no mesmo dia pelo mesmo profissional, conta só 1." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Atendimento Individual (Presencial, Domiciliar ou Remoto)",
+                "Atividade Coletiva (Educação em Saúde, Grupo, Práticas Corporais)",
+                "Atendimentos Compartilhados (contam para cada profissional)"
+              ],
+              cbos: [
+                "Nutricionista (2237)", "Fisioterapeuta (2236)", "Psicólogo (2515)", 
+                "Assistente Social (2516)", "Fonoaudiólogo (2238)", "Farmacêutico (2234)", 
+                "Terapeuta Ocupacional (2239)", "Prof. Ed. Física (2241)", "Arte Educador (5153)", 
+                "Sanitarista (1312)", "Médicos Especialistas (Cardio, Dermato, Psiquiatra, etc)"
+              ],
+              forms: [
+                "Ficha de Atendimento Individual (e-SUS)",
+                "Ficha de Atividade Coletiva (e-SUS)"
+              ]
+            }
+          },
+          {
+            id: "M2",
+            code: "M2",
+            title: "Ações Interprofissionais",
+            category: "Trabalho Colaborativo",
+            targetDescription: "Maior que 5%",
+            unit: "% ações",
+            description: "Proporção de ações realizadas de forma compartilhada (matriciamento, consultas conjuntas).",
+            requirements: [
+              { title: "Regra de Ouro", text: "Ação deve ter SIMULTANEAMENTE no mínimo 2 profissionais de CNS diferentes." },
+              { title: "Obrigatório", text: "Pelo menos 1 dos profissionais DEVE ser da eMulti (CBO listado)." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Consulta Compartilhada (2 profissionais ao mesmo tempo)",
+                "Atividade Coletiva com tema 'Discussão de Caso/Projeto Terapêutico Singular (PTS)'",
+                "Reunião de Matriciamento entre equipes",
+                "Resposta a solicitação de interconsulta no PEC (Módulo Compartilhamento)"
+              ],
+              cbos: [
+                "Obrigatório: 1 Profissional eMulti (Nutri, Psico, Fisio, etc)",
+                "+",
+                "1 Profissional de qualquer equipe (Médico, Enf, Dentista, ACS, Tec. Enf)"
+              ],
+              forms: [
+                "Ficha de Atendimento Individual (Adicionar profissional participante)",
+                "Ficha de Atividade Coletiva (Marcar tema: Discussão de Caso/PTS - Cód 05)",
+                "Prontuário Eletrônico (PEC) - Módulo Compartilhamento de Cuidado"
+              ]
+            }
+          }
+        ];
+
+        // --- DADOS INDICADORES APS (C1 a C7) ---
+        const apsIndicators = [
+          {
+            id: "C1",
+            code: "C1",
+            title: "Mais Acesso à APS",
+            iconName: "Accessibility",
+            category: "Acesso",
+            targetDescription: "> 50%",
+            description: "Percentual de atendimentos de demanda programada em relação ao total.",
+            requirements: [
+              { title: "Numerador", text: "Atendimentos de demanda programada (Consulta agendada, Cuidado continuado)." },
+              { title: "Denominador", text: "Total de atendimentos (Programados + Espontâneos)." },
+              { title: "Objetivo", text: "Equilibrar a oferta entre urgências e cuidado continuado/preventivo." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Consulta Agendada Programada",
+                "Cuidado Continuado/Programado"
+              ],
+              cbos: [
+                "Médico da Estratégia de Saúde da Família (2251)",
+                "Enfermeiro da Estratégia de Saúde da Família (2235)"
+              ],
+              forms: [
+                "Ficha de Atendimento Individual (Campo: Tipo de Atendimento)"
+              ]
+            }
+          },
+          {
+            id: "C2",
+            code: "C2",
+            title: "Desenvolvimento Infantil",
+            iconName: "Baby",
+            category: "Saúde da Criança",
+            targetDescription: "> 75%",
+            description: "Monitoramento integral de crianças até 2 anos.",
+            requirements: [
+              { title: "Vacinação", text: "Penta (3ª dose), VIP (3ª dose) antes de 1 ano." },
+              { title: "Consultas", text: "7 Consultas de Puericultura (Méd/Enf) até 2 anos." },
+              { title: "Visitas", text: "1ª semana e rotina (ACS)." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Consulta de Puericultura (Cód: 03.01.01.007-2)",
+                "Vacinação (Penta, VIP, Pneumo 10, SCR)",
+                "Visita Domiciliar (1ª semana e rotina)"
+              ],
+              cbos: [
+                "Médico (2251) / Enfermeiro (2235) para consultas",
+                "Técnico de Enfermagem (3222) para vacinas",
+                "ACS (5151) para visitas"
+              ],
+              forms: [
+                "Ficha de Atendimento Individual (MIAI)",
+                "Ficha de Vacinação (MIV)",
+                "Ficha de Visita Domiciliar (MIVDT)"
+              ]
+            }
+          },
+          {
+            id: "C3",
+            code: "C3",
+            title: "Gestação e Puerpério",
+            iconName: "HeartPulse",
+            category: "Saúde da Mulher",
+            targetDescription: "> 75%",
+            description: "Cuidado longitudinal da gestante e puérpera.",
+            requirements: [
+              { title: "Captação", text: "1ª consulta até a 12ª semana." },
+              { title: "Exames", text: "Sífilis/HIV solicitados no 1º e 3º trimestre." },
+              { title: "Odonto", text: "Consulta odontológica programática." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Consulta Pré-natal (03.01.01.011-0)",
+                "Consulta Puerperal (até 42 dias)",
+                "Testes Rápidos (Sífilis/HIV) ou Sorologias",
+                "Atendimento Odontológico à Gestante"
+              ],
+              cbos: [
+                "Médico (2251) / Enfermeiro (2235)",
+                "Cirurgião-Dentista (2232)",
+                "ACS (Visita)"
+              ],
+              forms: [
+                "MIAI (Marcar 'Gestante' e DUM correta)",
+                "MIAOI (Odonto)",
+                "Ficha de Procedimentos (Testes Rápidos)"
+              ]
+            }
+          },
+          {
+            id: "C4",
+            code: "C4",
+            title: "Cuidado com Diabetes",
+            iconName: "Stethoscope",
+            category: "Crônicas",
+            targetDescription: "> 75%",
+            description: "Acompanhamento de pessoas com Diabetes.",
+            requirements: [
+              { title: "Monitoramento", text: "Consulta + Hemoglobina Glicada (semestral)." },
+              { title: "PA", text: "Aferição de Pressão Arterial (semestral)." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Consulta Médica/Enfermagem (Monitoramento)",
+                "Solicitação de Hemoglobina Glicada (Cód: 02.02.01.050-3)",
+                "Aferição de PA (03.01.10.003-9)",
+                "Avaliação de Pé Diabético (03.01.04.009-5)"
+              ],
+              cbos: [
+                "Médico (2251) / Enfermeiro (2235)",
+                "Técnico de Enfermagem (PA)"
+              ],
+              forms: [
+                "MIAI (Registro da consulta + CID/CIAP de Diabetes)",
+                "Ficha de Procedimentos (Aferição PA)"
+              ]
+            }
+          },
+          {
+            id: "C5",
+            code: "C5",
+            title: "Cuidado com Hipertensão",
+            iconName: "Stethoscope",
+            category: "Crônicas",
+            targetDescription: "> 75%",
+            description: "Acompanhamento de pessoas com Hipertensão.",
+            requirements: [
+              { title: "Consulta", text: "Pelo menos 1 consulta (Médico/Enf) nos últimos 6 meses." },
+              { title: "Pressão Arterial", text: "Aferição obrigatória a cada 6 meses." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Consulta Médica/Enfermagem",
+                "Aferição de Pressão Arterial (Cód: 03.01.10.003-9)"
+              ],
+              cbos: [
+                "Médico (2251) / Enfermeiro (2235)",
+                "Técnico de Enfermagem (Aferição PA)"
+              ],
+              forms: [
+                "MIAI (Registro da consulta + CID/CIAP de Hipertensão)",
+                "Ficha de Procedimentos (Aferição PA)"
+              ]
+            }
+          },
+          {
+            id: "C6",
+            code: "C6",
+            title: "Cuidado da Pessoa Idosa",
+            iconName: "Users",
+            category: "Idosos",
+            targetDescription: "> 75%",
+            description: "Atenção integral à saúde da pessoa com 60 anos ou mais.",
+            requirements: [
+              { title: "Vacinação", text: "Registro de vacina Influenza/Polio." },
+              { title: "Antropometria", text: "Peso e altura simultâneos nos últimos 12 meses." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Vacinação (Campanha ou Rotina)",
+                "Aferição de Pressão Arterial",
+                "Medição de Peso e Altura",
+                "Consulta Médica/Enfermagem (Avaliação Multidimensional)"
+              ],
+              cbos: [
+                "Médico / Enfermeiro (Consulta)",
+                "Técnico de Enfermagem (Vacina/Dados vitais)",
+                "ACS (Visita)"
+              ],
+              forms: [
+                "Ficha de Vacinação",
+                "MIAI (Consulta)",
+                "Ficha de Procedimentos (Peso/Altura/PA)"
+              ]
+            }
+          },
+          {
+            id: "C7",
+            code: "C7",
+            title: "Prevenção do Câncer",
+            iconName: "ShieldPlus",
+            category: "Saúde da Mulher",
+            targetDescription: "> 75%",
+            description: "Rastreamento de câncer de colo de útero e mama.",
+            requirements: [
+              { title: "Citopatológico", text: "Mulheres 25-64 anos (a cada 3 anos)." },
+              { title: "Mamografia", text: "Mulheres 50-69 anos (a cada 2 anos)." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "Coleta de Citopatológico (Cód: 02.01.02.003-3)",
+                "Solicitação de Mamografia Bilateral (Cód: 02.04.03.018-8)"
+              ],
+              cbos: [
+                "Enfermeiro (Coleta Cito)",
+                "Médico (Coleta Cito / Solicitação Mamografia)"
+              ],
+              forms: [
+                "MIAI (Campo: Exames Solicitados/Avaliados)",
+                "Ficha de Procedimentos (Registro da Coleta)"
+              ]
+            }
+          }
+        ];
+
+        // --- DADOS INDICADORES SAÚDE BUCAL (B1 a B6) ---
+        const oralHealthIndicators = [
+          {
+            id: "B1",
+            code: "B1",
+            title: "Primeira Consulta Programada",
+            iconName: "Smile",
+            category: "Acesso",
+            targetDescription: "> 5%",
+            unit: "% cobertura",
+            description: "Cobertura de primeira consulta odontológica programática em relação à população adscrita.",
+            requirements: [
+              { title: "Numerador", text: "Pessoas com 1ª consulta programática (Cód 03.01.01.015-3)." },
+              { title: "Regra", text: "Usuário contabilizado apenas 1 vez a cada 12 meses para o mesmo dentista." }
+            ],
+            technicalDetails: {
+              procedures: ["03.01.01.015-3 - Primeira Consulta Odontológica Programática"],
+              cbos: [
+                "Cirurgião-Dentista ESF (2232-93)", 
+                "Cirurgião-Dentista Clínico Geral (2232-08)",
+                "Cirurgião-Dentista Saúde Coletiva (2232-72)"
+              ],
+              forms: ["Ficha de Atendimento Odontológico Individual (MIAOI) -> Campo: Tipo de Consulta"]
+            }
+          },
+          {
+            id: "B2",
+            code: "B2",
+            title: "Tratamento Concluído",
+            iconName: "Smile",
+            category: "Resolutividade",
+            targetDescription: "> 75%",
+            unit: "% conclusão",
+            description: "Percentual de tratamentos concluídos em relação às primeiras consultas programáticas.",
+            requirements: [
+              { title: "Numerador", text: "Pessoas com tratamento concluído (Conduta: Tratamento Concluído)." },
+              { title: "Denominador", text: "Total de primeiras consultas odontológicas programáticas." }
+            ],
+            technicalDetails: {
+              procedures: ["Registro de fim de tratamento no plano terapêutico"],
+              cbos: ["Cirurgião-Dentista (2232-93, 2232-08, 2232-72)"],
+              forms: ["MIAOI -> Campo Conduta: Selecionar 'Tratamento Concluído'"]
+            }
+          },
+          {
+            id: "B3",
+            code: "B3",
+            title: "Taxa de Exodontia",
+            iconName: "Smile",
+            category: "Curativo",
+            targetDescription: "8% a 10%",
+            unit: "% exodontias",
+            description: "Proporção de extrações dentárias em relação ao total de procedimentos individuais.",
+            requirements: [
+              { title: "Numerador", text: "Exodontias de dentes permanentes (simples ou com alveoloplastia)." },
+              { title: "Denominador", text: "Total de procedimentos preventivos + curativos + exodontias." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "04.14.02.013-8 - Exodontia de dente permanente",
+                "04.14.02.014-6 - Exodontia múltipla com alveoloplastia por sextante"
+              ],
+              cbos: ["Cirurgião-Dentista (2232)"],
+              forms: ["MIAOI -> Adicionar procedimento pelo código SIGTAP"]
+            }
+          },
+          {
+            id: "B4",
+            code: "B4",
+            title: "Escovação Supervisionada",
+            iconName: "Smile",
+            category: "Coletivo",
+            targetDescription: "> 100%",
+            unit: "cobertura",
+            description: "Proporção de crianças (6-12 anos) beneficiadas com escovação supervisionada.",
+            requirements: [
+              { title: "Público", text: "Crianças de 6 a 12 anos vinculadas à equipe." },
+              { title: "Ação", text: "Ação Coletiva de Escovação Dental Supervisionada." }
+            ],
+            technicalDetails: {
+              procedures: ["01.01.02.003-1 - Ação Coletiva de Escovação Dental Supervisionada"],
+              cbos: [
+                "Cirurgião-Dentista (2232)",
+                "Técnico em Saúde Bucal - TSB (3224-05, 3224-25)",
+                "Auxiliar em Saúde Bucal - ASB (3224-15, 3224-30)"
+              ],
+              forms: ["Ficha de Atividade Coletiva -> Tipo: Educação em Saúde -> Prática: Escovação Dental Supervisionada"]
+            }
+          },
+          {
+            id: "B5",
+            code: "B5",
+            title: "Procedimentos Preventivos",
+            iconName: "Smile",
+            category: "Preventivo",
+            targetDescription: "80% a 85%",
+            unit: "% preventivos",
+            description: "Proporção de procedimentos preventivos individuais em relação ao total de procedimentos.",
+            requirements: [
+              { title: "Numerador", text: "Ações como selante, flúor, evidenciação de placa, orientação de higiene." },
+              { title: "Meta", text: "Foco na prevenção. Parâmetro Ótimo entre 80% e 85%." }
+            ],
+            technicalDetails: {
+              procedures: [
+                "01.01.02.006-6 - Aplicação de selante",
+                "01.01.02.007-4 - Aplicação tópica de flúor",
+                "01.01.02.008-2 - Evidenciação de placa bacteriana",
+                "01.01.02.010-4 - Orientação de higiene bucal",
+                "01.01.02.005-8 - Aplicação de cariostático",
+                "01.01.02.009-0 - Selamento provisório"
+              ],
+              cbos: ["Cirurgião-Dentista (2232)", "Técnico em Saúde Bucal (3224)"],
+              forms: ["MIAOI -> Registro de Procedimentos"]
+            }
+          },
+          {
+            id: "B6",
+            code: "B6",
+            title: "Tratamento Restaurador (ART)",
+            iconName: "Smile",
+            category: "Curativo",
+            targetDescription: "> 8%",
+            unit: "% ART",
+            description: "Proporção de Tratamento Restaurador Atraumático (ART) em relação aos procedimentos restauradores.",
+            requirements: [
+              { title: "Técnica", text: "Minimamente invasiva, sem uso de 'motorzinho', usando ionômero de vidro." },
+              { title: "Numerador", text: "Procedimentos de ART (Cód 03.07.01.007-4)." }
+            ],
+            technicalDetails: {
+              procedures: ["03.07.01.007-4 - Tratamento Restaurador Atraumático (TRA/ART)"],
+              cbos: ["Cirurgião-Dentista (2232)"],
+              forms: ["MIAOI -> Adicionar procedimento"]
+            }
+          }
+        ];
+
+        const App = () => {
+          const [activeTab, setActiveTab] = useState("APS");
+          const [selectedCategory, setSelectedCategory] = useState("Todos");
+
+          let currentIndicators = [];
+          let headerTitle = "";
+          let headerSubtitle = "";
+          let headerIconName = "Activity";
+          let headerColorClass = "bg-blue-100 text-blue-600";
+
+          switch(activeTab) {
+            case "APS":
+              currentIndicators = apsIndicators;
+              headerTitle = "Atenção Primária";
+              headerSubtitle = "Indicadores de Desempenho (C1-C7)";
+              headerIconName = "Users";
+              headerColorClass = "bg-blue-100 text-blue-600";
+              break;
+            case "eMulti":
+              currentIndicators = eMultiIndicators;
+              headerTitle = "Equipe eMulti";
+              headerSubtitle = "Indicadores Multiprofissionais (M1-M2)";
+              headerIconName = "ListChecks";
+              headerColorClass = "bg-purple-100 text-purple-600";
+              break;
+            case "Bucal":
+              currentIndicators = oralHealthIndicators;
+              headerTitle = "Saúde Bucal";
+              headerSubtitle = "Indicadores Odontológicos (B1-B6)";
+              headerIconName = "Smile";
+              headerColorClass = "bg-teal-100 text-teal-600";
+              break;
+            case "ACS":
+              currentIndicators = acsIndicators;
+              headerTitle = "Cadastro & ACS";
+              headerSubtitle = "Vínculo e Território (Nota Técnica 30/2025)";
+              headerIconName = "MapPinned";
+              headerColorClass = "bg-orange-100 text-orange-600";
+              break;
+            default:
+              currentIndicators = apsIndicators;
+          }
+          
+          const categories = ["Todos", ...new Set(currentIndicators.map(i => i.category))];
+          
+          const filteredIndicators = selectedCategory === "Todos" 
+            ? currentIndicators 
+            : currentIndicators.filter(i => i.category === selectedCategory);
+
+          return (
+            <div className="flex min-h-screen font-sans text-slate-800">
+              
+              {/* Sidebar de Navegação */}
+              <aside className="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
+                <div className="p-6 border-b border-slate-800">
+                  <h1 className="text-xl font-bold flex items-center gap-2">
+                    <Icon name="Activity" className="text-indigo-400 w-6 h-6" />
+                    Gestor SUS
+                  </h1>
+                  <p className="text-xs text-slate-400 mt-1">Painel de Metas 2025</p>
                 </div>
 
-                {/* Seção de Especificações Técnicas (Agora disponível para todos os grupos) */}
-                {indicator.technicalDetails && (
-                  <div className="bg-slate-50/80 p-5 border-b border-slate-100">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Briefcase className="w-4 h-4 text-indigo-600" />
-                      <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Especificações Técnicas</h4>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      {/* Procedimentos */}
-                      <div>
-                         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-1">
-                           <Sticker className="w-3 h-3" /> Procedimentos / Códigos
-                         </div>
-                         <ul className="list-disc list-inside text-sm text-slate-600 pl-1 space-y-1">
-                           {indicator.technicalDetails.procedures.map((proc, idx) => (
-                             <li key={idx}>{proc}</li>
-                           ))}
-                         </ul>
-                      </div>
-
-                      {/* CBOs */}
-                      <div>
-                         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-1">
-                           <Users className="w-3 h-3" /> Quem pode registrar (CBO)
-                         </div>
-                         <div className="flex flex-wrap gap-1">
-                           {indicator.technicalDetails.cbos.map((cbo, idx) => (
-                             <span key={idx} className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded text-slate-600">
-                               {cbo}
-                             </span>
-                           ))}
-                         </div>
-                      </div>
-
-                       {/* Fichas */}
-                       <div>
-                         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-1">
-                           <FileSpreadsheet className="w-3 h-3" /> Fichas / Sistemas
-                         </div>
-                         <ul className="list-disc list-inside text-sm text-slate-600 pl-1 space-y-1">
-                           {indicator.technicalDetails.forms.map((form, idx) => (
-                             <li key={idx}>{form}</li>
-                           ))}
-                         </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Lista de Requisitos (Boas Práticas) */}
-                <div className="p-6 bg-white">
-                  <div className="flex items-center gap-2 mb-4">
-                    <ListChecks className="w-4 h-4 text-indigo-500" />
-                    <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
-                      Regras & Requisitos
-                    </h4>
+                <nav className="p-4 space-y-2 flex-1">
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">
+                    Módulos de Gestão
                   </div>
                   
-                  <ul className="space-y-3">
-                    {indicator.requirements.map((req, idx) => (
-                      <li key={idx} className="flex gap-3 text-sm group-hover:bg-slate-50 p-2 rounded-lg transition-colors">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-semibold text-slate-800 mr-1">
-                            {req.title}:
-                          </span>
-                          <span className="text-slate-600">
-                            {req.text}
-                          </span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <button 
+                    onClick={() => {setActiveTab("APS"); setSelectedCategory("Todos")}}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                      activeTab === "APS" 
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" 
+                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <Icon name="Users" className="w-5 h-5" />
+                    <span className="font-medium">Atenção Primária</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {setActiveTab("ACS"); setSelectedCategory("Todos")}}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                      activeTab === "ACS" 
+                      ? "bg-orange-600 text-white shadow-lg shadow-orange-900/50" 
+                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <Icon name="MapPinned" className="w-5 h-5" />
+                    <span className="font-medium">Cadastro & ACS</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {setActiveTab("eMulti"); setSelectedCategory("Todos")}}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                      activeTab === "eMulti" 
+                      ? "bg-purple-600 text-white shadow-lg shadow-purple-900/50" 
+                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <Icon name="ListChecks" className="w-5 h-5" />
+                    <span className="font-medium">Equipe eMulti</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {setActiveTab("Bucal"); setSelectedCategory("Todos")}}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                      activeTab === "Bucal" 
+                      ? "bg-teal-600 text-white shadow-lg shadow-teal-900/50" 
+                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <Icon name="Smile" className="w-5 h-5" />
+                    <span className="font-medium">Saúde Bucal</span>
+                  </button>
+                </nav>
+
+                <div className="p-4 bg-slate-950 text-xs text-slate-500">
+                  Baseado nas Notas Técnicas 2024/2025 (C1-C7, M1-M2, B1-B6, NT30)
+                </div>
+              </aside>
+
+              {/* Conteúdo Principal */}
+              <main className="flex-1 overflow-y-auto h-screen">
+                {/* Mobile Header */}
+                <div className="md:hidden bg-slate-900 text-white p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h1 className="font-bold flex items-center gap-2">
+                      <Icon name="Activity" className="w-5 h-5 text-indigo-400" />
+                      Gestor SUS
+                    </h1>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                     <button 
+                       onClick={() => setActiveTab("APS")} 
+                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "APS" ? "bg-indigo-600" : "bg-slate-800"}`}
+                     >APS</button>
+                     <button 
+                       onClick={() => setActiveTab("ACS")} 
+                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "ACS" ? "bg-orange-600" : "bg-slate-800"}`}
+                     >ACS</button>
+                     <button 
+                       onClick={() => setActiveTab("eMulti")} 
+                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "eMulti" ? "bg-purple-600" : "bg-slate-800"}`}
+                     >eMulti</button>
+                     <button 
+                       onClick={() => setActiveTab("Bucal")} 
+                       className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "Bucal" ? "bg-teal-600" : "bg-slate-800"}`}
+                     >S. Bucal</button>
+                  </div>
                 </div>
 
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-10 text-center text-slate-400 text-sm pb-10">
-            <p>Sistema atualizado com as Notas Técnicas 2024/2025 - Ministério da Saúde</p>
-          </div>
+                <div className="p-6 md:p-10 max-w-6xl mx-auto">
+                  
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                      <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+                        {headerTitle}
+                      </h2>
+                      <p className="text-slate-500 mt-1">
+                        {headerSubtitle}
+                      </p>
+                    </div>
+                    
+                    {/* Filtros de Categoria */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
+                      {categories.map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setSelectedCategory(cat)}
+                          className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
+                            selectedCategory === cat 
+                              ? "bg-indigo-100 text-indigo-700 border-indigo-200" 
+                              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-        </div>
-      </main>
-    </div>
-  );
-};
+                  {/* Grid de Cards */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {filteredIndicators.map((indicator) => (
+                      <div 
+                        key={indicator.id}
+                        className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 group"
+                      >
+                        {/* Header do Card */}
+                        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex items-center gap-3">
+                              <span className={`w-10 h-10 rounded-lg flex items-center justify-center ${headerColorClass}`}>
+                                <Icon name={indicator.iconName || "Target"} className="w-6 h-6" />
+                              </span>
+                              <div>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                  {indicator.code}
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 leading-tight">
+                                  {indicator.title}
+                                </h3>
+                              </div>
+                            </div>
+                            <div className="bg-white px-3 py-1 rounded-full border border-emerald-100 shadow-sm flex flex-col items-end">
+                               <span className="text-[10px] text-slate-400 font-bold uppercase">Meta / Peso</span>
+                               <span className="text-lg font-black text-emerald-600 whitespace-nowrap">{indicator.targetDescription}</span>
+                            </div>
+                          </div>
+                          <p className="text-slate-600 text-sm leading-relaxed">
+                            {indicator.description}
+                          </p>
+                        </div>
 
-export default App;
+                        {/* Seção de Especificações Técnicas (Disponível para todos) */}
+                        {indicator.technicalDetails && (
+                          <div className="bg-slate-50/80 p-5 border-b border-slate-100">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Icon name="Briefcase" className="w-4 h-4 text-indigo-600" />
+                              <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Especificações Técnicas</h4>
+                            </div>
+                            
+                            <div className="space-y-4">
+                              {/* Procedimentos */}
+                              <div>
+                                 <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-1">
+                                   <Icon name="Sticker" className="w-3 h-3" /> Procedimentos / Códigos
+                                 </div>
+                                 <ul className="list-disc list-inside text-sm text-slate-600 pl-1 space-y-1">
+                                   {indicator.technicalDetails.procedures.map((proc, idx) => (
+                                     <li key={idx}>{proc}</li>
+                                   ))}
+                                 </ul>
+                              </div>
+
+                              {/* CBOs */}
+                              <div>
+                                 <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-1">
+                                   <Icon name="Users" className="w-3 h-3" /> Quem pode registrar (CBO)
+                                 </div>
+                                 <div className="flex flex-wrap gap-1">
+                                   {indicator.technicalDetails.cbos.map((cbo, idx) => (
+                                     <span key={idx} className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded text-slate-600">
+                                       {cbo}
+                                     </span>
+                                   ))}
+                                 </div>
+                              </div>
+
+                               {/* Fichas */}
+                               <div>
+                                 <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-1">
+                                   <Icon name="FileSpreadsheet" className="w-3 h-3" /> Fichas / Sistemas
+                                 </div>
+                                 <ul className="list-disc list-inside text-sm text-slate-600 pl-1 space-y-1">
+                                   {indicator.technicalDetails.forms.map((form, idx) => (
+                                     <li key={idx}>{form}</li>
+                                   ))}
+                                 </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Lista de Requisitos (Boas Práticas) */}
+                        <div className="p-6 bg-white">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Icon name="ListChecks" className="w-4 h-4 text-indigo-500" />
+                            <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                              Regras & Requisitos
+                            </h4>
+                          </div>
+                          
+                          <ul className="space-y-3">
+                            {indicator.requirements.map((req, idx) => (
+                              <li key={idx} className="flex gap-3 text-sm group-hover:bg-slate-50 p-2 rounded-lg transition-colors">
+                                <Icon name="CheckCircle2" className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="font-semibold text-slate-800 mr-1">
+                                    {req.title}:
+                                  </span>
+                                  <span className="text-slate-600">
+                                    {req.text}
+                                  </span>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-10 text-center text-slate-400 text-sm pb-10">
+                    <p>Sistema atualizado com as Notas Técnicas 2024/2025 - Ministério da Saúde</p>
+                  </div>
+
+                </div>
+              </main>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
