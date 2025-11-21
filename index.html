@@ -8,6 +8,9 @@
     <!-- Tailwind CSS (Estilos) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- FontAwesome (Ícones Novos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <!-- React & ReactDOM (Motor do App) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -15,7 +18,7 @@
     <!-- Babel (Tradutor de código) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Lucide Icons (Ícones) -->
+    <!-- Lucide Icons (Ícones Antigos) -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
@@ -34,7 +37,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Componente para Ícones (já que não podemos usar import no navegador)
+        // Componente para Ícones Lucide (já que não podemos usar import no navegador)
         const Icon = ({ name, className }) => {
             const iconName = name || 'Circle'; // Fallback
             
@@ -656,7 +659,8 @@
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
-                    <Icon name="Users" className="w-5 h-5" />
+                    {/* --- ÍCONE SUBSTITUÍDO AQUI --- */}
+                    <i className="fa-solid fa-house-medical w-5 h-5 flex items-center justify-center"></i>
                     <span className="font-medium">Atenção Primária</span>
                   </button>
 
@@ -668,7 +672,8 @@
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
-                    <Icon name="MapPinned" className="w-5 h-5" />
+                    {/* --- ÍCONE SUBSTITUÍDO AQUI --- */}
+                    <i className="fa-solid fa-house-medical-circle-check w-5 h-5 flex items-center justify-center"></i>
                     <span className="font-medium">Cadastro & ACS</span>
                   </button>
 
@@ -680,7 +685,8 @@
                       : "text-slate-400 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
-                    <Icon name="ListChecks" className="w-5 h-5" />
+                    {/* --- ÍCONE SUBSTITUÍDO AQUI --- */}
+                    <i className="fa-solid fa-people-line w-5 h-5 flex items-center justify-center"></i>
                     <span className="font-medium">Equipe eMulti</span>
                   </button>
 
