@@ -190,24 +190,25 @@
             title: "Média de Atendimentos eMulti",
             iconName: "Activity",
             category: "Acesso eMulti",
-            targetDescription: "Maior que 3,0",
+            targetDescription: "> 3,0 (Ótimo)",
             unit: "atend/pessoa",
-            description: "Mensura a média de atendimentos por pessoa realizados pela equipe Multiprofissional.",
+            description: "Mensura a intensidade do cuidado, ou seja, a média de atendimentos que cada usuário acessou com a equipe.",
             requirements: [
-              { title: "Meta", text: "Garantir que a equipe realize um volume adequado de atendimentos em relação à população assistida." },
-              { title: "Regra", text: "Evitar duplicidade: Se o mesmo paciente for atendido 2x no mesmo dia pelo mesmo profissional, conta só 1." }
+              { title: "Meta", text: "Ótimo: > 3,0 | Bom: > 2,0 até 3,0 | Suficiente: > 1,0 até 2,0." },
+              { title: "Cálculo", text: "Numerador: Total de atendimentos (Individuais + Coletivos). Denominador: Pessoas atendidas (CPF únicos)." },
+              { title: "Regra", text: "Registros duplicados (mesmo profissional, mesmo paciente, mesmo dia) são contados apenas uma vez." }
             ],
             technicalDetails: {
               procedures: [
                 "Atendimento Individual (Presencial, Domiciliar ou Remoto)",
                 "Atividade Coletiva (Educação em Saúde, Grupo, Práticas Corporais)",
-                "Atendimentos Compartilhados (contam para cada profissional)"
+                "Atendimentos Compartilhados (contam para cada profissional envolvido)"
               ],
               cbos: [
-                "Nutricionista (2237)", "Fisioterapeuta (2236)", "Psicólogo (2515)", 
-                "Assistente Social (2516)", "Fonoaudiólogo (2238)", "Farmacêutico (2234)", 
-                "Terapeuta Ocupacional (2239)", "Prof. Ed. Física (2241)", "Arte Educador (5153)", 
-                "Sanitarista (1312)", "Médicos Especialistas (Cardio, Dermato, Psiquiatra, etc)"
+                "Nutricionista, Fisioterapeuta, Psicólogo, Assistente Social",
+                "Fonoaudiólogo, Farmacêutico, Terapeuta Ocupacional",
+                "Prof. Ed. Física, Arte Educador, Sanitarista",
+                "Médicos: Acupunturista, Homeopata, Veterinário, Pediatra, Gineco, Psiquiatra, Geriatra, etc."
               ],
               forms: [
                 "Ficha de Atendimento Individual (e-SUS)",
@@ -221,28 +222,30 @@
             title: "Ações Interprofissionais",
             iconName: "Users",
             category: "Trabalho Colaborativo",
-            targetDescription: "Maior que 5%",
+            targetDescription: "> 5% (Ótimo)",
             unit: "% ações",
-            description: "Proporção de ações realizadas de forma compartilhada (matriciamento, consultas conjuntas).",
+            description: "Proporção de ações realizadas de forma compartilhada (junto com outra equipe ou entre profissionais eMulti).",
             requirements: [
-              { title: "Regra de Ouro", text: "Ação deve ter SIMULTANEAMENTE no mínimo 2 profissionais de CNS diferentes." },
-              { title: "Obrigatório", text: "Pelo menos 1 dos profissionais DEVE ser da eMulti (CBO listado)." }
+              { title: "Meta", text: "Ótimo: > 5% | Bom: > 2,5% até 5% | Suficiente: > 1% até 2,5%." },
+              { title: "Regra de Ouro (Reuniões)", text: "Reuniões de Equipe/Matriciamento (Cód 01, 02, 03) SÓ CONTAM se o tema for 'Discussão de Caso/PTS' (Cód 05)." },
+              { title: "Individual Compartilhado", text: "Exige 2 profissionais de NÍVEL SUPERIOR simultâneos (min. 1 eMulti)." },
+              { title: "Coletivo Compartilhado", text: "Aceita profissionais de Nível Médio ou Superior (min. 1 eMulti)." }
             ],
             technicalDetails: {
               procedures: [
-                "Consulta Compartilhada (2 profissionais ao mesmo tempo)",
-                "Atividade Coletiva com tema 'Discussão de Caso/Projeto Terapêutico Singular (PTS)'",
-                "Reunião de Matriciamento entre equipes",
+                "Consulta Compartilhada (2 profissionais Sup. ao mesmo tempo)",
+                "Atividade Coletiva Compartilhada (Educação, Grupo, Mobilização)",
+                "Reunião de Matriciamento (Obrigatório Tema: Discussão de Caso/PTS)",
                 "Resposta a solicitação de interconsulta no PEC (Módulo Compartilhamento)"
               ],
               cbos: [
-                "Obrigatório: 1 Profissional eMulti (Nutri, Psico, Fisio, etc)",
+                "Obrigatório: 1 Profissional eMulti (Lista do M1)",
                 "+",
-                "1 Profissional de qualquer equipe (Médico, Enf, Dentista, ACS, Tec. Enf)"
+                "1 Profissional de qualquer equipe (Médico, Enf, Dentista, Téc. Enf, ACS, etc)"
               ],
               forms: [
                 "Ficha de Atendimento Individual (Adicionar profissional participante)",
-                "Ficha de Atividade Coletiva (Marcar tema: Discussão de Caso/PTS - Cód 05)",
+                "Ficha de Atividade Coletiva (Marcar INEPs/CNS dos profissionais)",
                 "Prontuário Eletrônico (PEC) - Módulo Compartilhamento de Cuidado"
               ]
             }
@@ -478,8 +481,9 @@
             unit: "% cobertura",
             description: "Cobertura de primeira consulta odontológica programática em relação à população adscrita.",
             requirements: [
-              { title: "Numerador", text: "Pessoas com 1ª consulta programática (Cód 03.01.01.015-3)." },
-              { title: "Regra", text: "Usuário contabilizado apenas 1 vez a cada 12 meses para o mesmo dentista." }
+              { title: "Definição", text: "Consulta com finalidade de diagnóstico e elaboração de plano preventivo-terapêutico (PPT)." },
+              { title: "Regra de 12 Meses", text: "Usuário só conta 1 vez a cada 12 meses para o mesmo profissional (a partir da data da 1ª consulta ou da conclusão)." },
+              { title: "Numerador", text: "Pessoas com registro de 'Primeira Consulta Odontológica Programática' (Cód 03.01.01.015-3)." }
             ],
             technicalDetails: {
               procedures: ["03.01.01.015-3 - Primeira Consulta Odontológica Programática"],
@@ -501,8 +505,9 @@
             unit: "% conclusão",
             description: "Percentual de tratamentos concluídos em relação às primeiras consultas programáticas.",
             requirements: [
-              { title: "Numerador", text: "Pessoas com tratamento concluído (Conduta: Tratamento Concluído)." },
-              { title: "Denominador", text: "Total de primeiras consultas odontológicas programáticas." }
+              { title: "Conceito", text: "Término da intervenção planejada no PPT." },
+              { title: "Numerador", text: "Pessoas com campo Conduta marcado como 'Tratamento Concluído'." },
+              { title: "Denominador", text: "Total de primeiras consultas odontológicas programáticas realizadas." }
             ],
             technicalDetails: {
               procedures: ["Registro de fim de tratamento no plano terapêutico"],
@@ -518,15 +523,16 @@
             category: "Curativo",
             targetDescription: "8% a 10%",
             unit: "% exodontias",
-            description: "Proporção de extrações dentárias em relação ao total de procedimentos individuais.",
+            description: "Proporção de extrações dentárias em relação ao total de procedimentos individuais (Preventivos + Curativos + Exodontias).",
             requirements: [
+              { title: "Faixa Ótima", text: "Entre 8% e 10% (Nem muito, nem pouco). Taxas < 8% ou > 14% são consideradas 'Regular'." },
               { title: "Numerador", text: "Exodontias de dentes permanentes (simples ou com alveoloplastia)." },
-              { title: "Denominador", text: "Total de procedimentos preventivos + curativos + exodontias." }
+              { title: "Denominador", text: "Soma de procedimentos preventivos, dentística, endo, perio e cirurgia." }
             ],
             technicalDetails: {
               procedures: [
-                "04.14.02.013-8 - Exodontia de dente permanente",
-                "04.14.02.014-6 - Exodontia múltipla com alveoloplastia por sextante"
+                "Numerador: 04.14.02.013-8 (Exodontia permanente), 04.14.02.014-6 (Exodontia múltipla)",
+                "Denominador inclui: Selantes, Flúor, Restaurações, Raspagem, Pulpotomia, etc."
               ],
               cbos: ["Cirurgião-Dentista (2232)"],
               forms: ["MIAOI -> Adicionar procedimento pelo código SIGTAP"]
@@ -540,10 +546,11 @@
             category: "Coletivo",
             targetDescription: "> 100%",
             unit: "cobertura",
-            description: "Proporção de crianças (6-12 anos) beneficiadas com escovação supervisionada.",
+            description: "Proporção de crianças (6-12 anos) beneficiadas com escovação supervisionada em relação à população estimada.",
             requirements: [
-              { title: "Público", text: "Crianças de 6 a 12 anos vinculadas à equipe." },
-              { title: "Ação", text: "Ação Coletiva de Escovação Dental Supervisionada." }
+              { title: "Faixa Etária", text: "Exclusivo para crianças de 6 a 12 anos (Idade Escolar)." },
+              { title: "Ação", text: "Ação Coletiva de Escovação Dental Supervisionada (com ou sem evidenciação de placa)." },
+              { title: "Meta", text: "Maior que 100% (significa alta cobertura ou múltiplas ações no grupo)." }
             ],
             technicalDetails: {
               procedures: ["01.01.02.003-1 - Ação Coletiva de Escovação Dental Supervisionada"],
@@ -565,8 +572,9 @@
             unit: "% preventivos",
             description: "Proporção de procedimentos preventivos individuais em relação ao total de procedimentos.",
             requirements: [
-              { title: "Numerador", text: "Ações como selante, flúor, evidenciação de placa, orientação de higiene." },
-              { title: "Meta", text: "Foco na prevenção. Parâmetro Ótimo entre 80% e 85%." }
+              { title: "Faixa Ótima", text: "Entre 80% e 85%. Atenção: Se ultrapassar 85%, o indicador cai para 'Regular' (indica possível negligência de curativos)." },
+              { title: "Numerador", text: "Selante, Flúor, Evidenciação de placa, Orientação de higiene, Cariostático, Selamento provisório." },
+              { title: "Restrição CBO", text: "Apenas Dentistas e TSB contam para este indicador (ASB não entra no cálculo)." }
             ],
             technicalDetails: {
               procedures: [
@@ -589,10 +597,10 @@
             category: "Curativo",
             targetDescription: "> 8%",
             unit: "% ART",
-            description: "Proporção de Tratamento Restaurador Atraumático (ART) em relação aos procedimentos restauradores.",
+            description: "Proporção de Tratamento Restaurador Atraumático (ART) em relação ao total de procedimentos RESTAURADORES.",
             requirements: [
-              { title: "Técnica", text: "Minimamente invasiva, sem uso de 'motorzinho', usando ionômero de vidro." },
-              { title: "Numerador", text: "Procedimentos de ART (Cód 03.07.01.007-4)." }
+              { title: "Denominador Específico", text: "O cálculo é sobre o total de restaurações (Resina + Amálgama + Ionômero + ART), e não sobre o total de procedimentos gerais." },
+              { title: "Técnica ART", text: "Minimamente invasiva, remoção de tecido cariado com instrumentos manuais." }
             ],
             technicalDetails: {
               procedures: ["03.07.01.007-4 - Tratamento Restaurador Atraumático (TRA/ART)"],
@@ -947,4 +955,3 @@
     </script>
 </body>
 </html>
-
