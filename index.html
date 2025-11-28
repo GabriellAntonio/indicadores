@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SYSMAR - Painel de Metas 2025</title>
 
-    <link rel="icon" href="./favicon.ico">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -16,6 +16,7 @@
     
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
@@ -25,6 +26,14 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body>
@@ -33,17 +42,20 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Componente para Ícones Lucide (já que não podemos usar import no navegador)
+        // Componente para Ícones Lucide
         const Icon = ({ name, className }) => {
-            const iconName = name || 'Circle'; // Fallback
+            const iconName = name || 'Circle'; 
             
             useEffect(() => {
                 if (window.lucide) {
                     window.lucide.createIcons();
                 }
-            }, [name]);
+            }, [name]); // Re-executa quando o nome do ícone muda
 
-            return <i data-lucide={iconName.toLowerCase().replace(/([a-z0-9])([A-Z])/g, '$1-$2')} className={className}></i>;
+            // Converte PascalCase para kebab-case (ex: MapPinned -> map-pinned)
+            const kebabName = iconName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+            return <i data-lucide={kebabName} className={className}></i>;
         };
 
         // --- DADOS INDICADORES CADASTRO & ACS (NT 30/2025) ---
@@ -82,16 +94,16 @@
           {
             id: "CAD2",
             code: "Validade",
-            title: "Atualização Cadastral",
+            title: "Atualização e Desempate",
             iconName: "ClipboardCheck",
             category: "Cadastro",
             targetDescription: "24 Meses",
             unit: "validade",
-            description: "Regras de saneamento e validade temporal dos registros no banco de dados.",
+            description: "Regras de saneamento, validade temporal e critérios de disputa de vínculo entre equipes.",
             requirements: [
               { title: "Regra dos 2 Anos", text: "Cadastros não atualizados há mais de 24 meses são desconsiderados." },
               { title: "Saneamento", text: "Cadastros marcados como 'Mudança de Território' ou 'Óbito' não contam." },
-              { title: "Duplicidade", text: "Em caso de múltiplos cadastros, vale o da equipe onde houve atendimento mais recente." }
+              { title: "Desempate de Vínculo", text: "Se o cidadão for atendido por mais de uma equipe, o vínculo fica com quem tiver (nesta ordem): 1º Mais atendimentos no ano; 2º Atendimento mais recente; 3º Cadastro mais recente." }
             ],
             technicalDetails: {
               procedures: [
@@ -118,27 +130,26 @@
             unit: "ponderação",
             description: "Antiga 'Capitação Ponderada'. Define quanto vale cada pessoa acompanhada baseada na vulnerabilidade.",
             requirements: [
-              { title: "Quem é 'Acompanhado'?", text: "Pessoa com mais de 1 contato assistencial nos últimos 12 meses." },
-              { title: "Peso Base (1.0)", text: "Pessoa sem critérios de vulnerabilidade." },
-              { title: "Peso Intermediário (1.2/1.3)", text: "Crianças/Idosos (x1.2) OU Beneficiários Bolsa Família/BPC (x1.3)." },
-              { title: "Peso Máximo (2.5)", text: "Criança/Idoso QUE TAMBÉM RECEBE Bolsa Família ou BPC." }
+              { title: "Regra de Ouro", text: "Para validar o vínculo, é necessário ter 2 contatos no ano, sendo OBRIGATÓRIO que pelo menos 1 seja uma 'Prática de Cuidado' (Consulta, Visita, Grupo, Odonto ou Consumo Alimentar)." },
+              { title: "Combinações Válidas", text: "1 Prática + 1 Procedimento (ex: Consulta + Vacina) OU 2 Práticas (ex: Consulta + Visita)." },
+              { title: "Combinação Inválida", text: "Apenas 2 Procedimentos (ex: Vacina + Curativo) NÃO geram vínculo." },
+              { title: "Pesos", text: "Base (1.0), Criança/Idoso (1.2), Bolsa Família/BPC (1.3), Criança/Idoso + Benefício (2.5)." }
             ],
             technicalDetails: {
               procedures: [
-                "Consulta Médica / Enfermagem / Odonto",
-                "Vacinação",
-                "Visita Domiciliar",
-                "Procedimentos (Aferição PA, Curativo, etc)"
+                "Práticas de Cuidado (Obrigatório pelo menos 1): Consulta Médica/Enf/Odonto, Visita Domiciliar, Atividade Coletiva, Marcadores de Consumo Alimentar.",
+                "Procedimentos (Serve como 2º contato): Vacinação, Aferição de PA, Curativo, Medição de Peso/Altura."
               ],
               cbos: [
                 "Médicos, Enfermeiros, Dentistas",
                 "Técnicos de Enfermagem / Saúde Bucal",
-                "ACS (Visita conta como contato assistencial)"
+                "ACS (Visita conta como Prática de Cuidado)"
               ],
               forms: [
-                "MIAI, MIAOI, Ficha de Vacinação",
-                "Ficha de Procedimentos",
-                "Ficha de Visita Domiciliar (MIVDT)"
+                "MIAI, MIAOI, MIAC (Coletiva)",
+                "Ficha de Marcadores de Consumo Alimentar",
+                "Ficha de Visita Domiciliar (MIVDT)",
+                "Ficha de Procedimentos / Vacinação"
               ]
             }
           },
@@ -177,6 +188,7 @@
             id: "M1",
             code: "M1",
             title: "Média de Atendimentos eMulti",
+            iconName: "Activity",
             category: "Acesso eMulti",
             targetDescription: "Maior que 3,0",
             unit: "atend/pessoa",
@@ -207,6 +219,7 @@
             id: "M2",
             code: "M2",
             title: "Ações Interprofissionais",
+            iconName: "Users",
             category: "Trabalho Colaborativo",
             targetDescription: "Maior que 5%",
             unit: "% ações",
@@ -236,7 +249,7 @@
           }
         ];
 
-        // --- DADOS INDICADORES APS (C1 a C7) ---
+        // --- DADOS INDICADORES APS (C1 a C7) - ATUALIZADO COM NOTAS METODOLÓGICAS ---
         const apsIndicators = [
           {
             id: "C1",
@@ -274,20 +287,22 @@
             targetDescription: "> 75%",
             description: "Monitoramento integral de crianças até 2 anos.",
             requirements: [
-              { title: "Vacinação", text: "Penta (3ª dose), VIP (3ª dose) antes de 1 ano." },
-              { title: "Consultas", text: "7 Consultas de Puericultura (Méd/Enf) até 2 anos." },
-              { title: "Visitas", text: "1ª semana e rotina (ACS)." }
+              { title: "Boas Práticas (A-E)", text: "Acumular pontos por práticas realizadas." },
+              { title: "Consultas (B)", text: "Pelo menos 9 consultas (Méd/Enf) até 2 anos." },
+              { title: "Peso e Altura (C)", text: "Pelo menos 9 registros simultâneos de peso/altura até 2 anos." },
+              { title: "Visitas Domiciliares (D)", text: "2 Visitas obrigatórias: 1ª até 30 dias e 2ª até 6 meses." },
+              { title: "Vacinação (E)", text: "Penta, Pólio (VIP), Pneumo 10, SCR (Doses do esquema primário)." }
             ],
             technicalDetails: {
               procedures: [
-                "Consulta de Puericultura (Cód: 03.01.01.007-2)",
-                "Vacinação (Penta, VIP, Pneumo 10, SCR)",
-                "Visita Domiciliar (1ª semana e rotina)"
+                "Consulta de Puericultura (03.01.01.007-2)",
+                "Avaliação Antropométrica (01.01.04.002-4)",
+                "Visita Domiciliar ACS (Motivo: Recém-nascido ou Criança)"
               ],
               cbos: [
-                "Médico (2251) / Enfermeiro (2235) para consultas",
-                "Técnico de Enfermagem (3222) para vacinas",
-                "ACS (5151) para visitas"
+                "Médico / Enfermeiro (Consultas)",
+                "Técnico de Enfermagem (Vacinas)",
+                "ACS (Visitas)"
               ],
               forms: [
                 "Ficha de Atendimento Individual (MIAI)",
@@ -303,28 +318,29 @@
             iconName: "HeartPulse",
             category: "Saúde da Mulher",
             targetDescription: "> 75%",
-            description: "Cuidado longitudinal da gestante e puérpera.",
+            description: "Cuidado longitudinal da gestante e puérpera (11 Boas Práticas - A a K).",
             requirements: [
-              { title: "Captação", text: "1ª consulta até a 12ª semana." },
-              { title: "Exames", text: "Sífilis/HIV solicitados no 1º e 3º trimestre." },
-              { title: "Odonto", text: "Consulta odontológica programática." }
+              { title: "Consultas (A, B, I)", text: "1ª até 12ª semana + 7 durante gestação + 1 Puerperal." },
+              { title: "Monitoramento (C, D)", text: "7 aferições de PA + 7 registros de Peso/Altura na gestação." },
+              { title: "Visitas ACS (E, J)", text: "3 visitas durante a gestação + 1 visita no puerpério." },
+              { title: "Prevenção (F)", text: "Vacina dTpa a partir da 20ª semana." },
+              { title: "Exames (G, H)", text: "Sífilis/HIV/HepB/HepC (1º tri) + Sífilis/HIV (3º tri)." },
+              { title: "Odonto (K)", text: "1 consulta odontológica na gestação." }
             ],
             technicalDetails: {
               procedures: [
-                "Consulta Pré-natal (03.01.01.011-0)",
-                "Consulta Puerperal (até 42 dias)",
-                "Testes Rápidos (Sífilis/HIV) ou Sorologias",
-                "Atendimento Odontológico à Gestante"
+                "Consulta Pré-natal e Puerperal",
+                "Testes Rápidos (Sífilis, HIV, Hep B/C)",
+                "Vacina dTpa adulto",
+                "Atendimento Odontológico"
               ],
               cbos: [
-                "Médico (2251) / Enfermeiro (2235)",
-                "Cirurgião-Dentista (2232)",
-                "ACS (Visita)"
+                "Médico / Enfermeiro",
+                "Cirurgião-Dentista",
+                "ACS (Visitas)"
               ],
               forms: [
-                "MIAI (Marcar 'Gestante' e DUM correta)",
-                "MIAOI (Odonto)",
-                "Ficha de Procedimentos (Testes Rápidos)"
+                "MIAI", "MIAOI", "Ficha de Procedimentos", "Ficha de Vacinação"
               ]
             }
           },
@@ -335,25 +351,27 @@
             iconName: "Stethoscope",
             category: "Crônicas",
             targetDescription: "> 75%",
-            description: "Acompanhamento de pessoas com Diabetes.",
+            description: "Acompanhamento de pessoas com Diabetes (6 Boas Práticas).",
             requirements: [
-              { title: "Monitoramento", text: "Consulta + Hemoglobina Glicada (semestral)." },
-              { title: "PA", text: "Aferição de Pressão Arterial (semestral)." }
+              { title: "Consultas (A)", text: "1 consulta (Méd/Enf) no semestre." },
+              { title: "Pressão Arterial (B)", text: "1 aferição de PA no semestre." },
+              { title: "Anual (C, E, F)", text: "1 Peso/Altura + 1 Hemoglobina Glicada + 1 Exame dos Pés (últimos 12 meses)." },
+              { title: "Visitas (D)", text: "2 Visitas Domiciliares (ACS) nos últimos 12 meses (intervalo mín. 30 dias)." }
             ],
             technicalDetails: {
               procedures: [
-                "Consulta Médica/Enfermagem (Monitoramento)",
-                "Solicitação de Hemoglobina Glicada (Cód: 02.02.01.050-3)",
-                "Aferição de PA (03.01.10.003-9)",
-                "Avaliação de Pé Diabético (03.01.04.009-5)"
+                "Consulta Médica/Enfermagem",
+                "Solicitação de HbA1c (02.02.01.050-3)",
+                "Avaliação de Pé Diabético (03.01.04.009-5)",
+                "Aferição de PA"
               ],
               cbos: [
-                "Médico (2251) / Enfermeiro (2235)",
-                "Técnico de Enfermagem (PA)"
+                "Médico / Enfermeiro",
+                "Técnico de Enfermagem (PA/Antropometria)",
+                "ACS (Visitas)"
               ],
               forms: [
-                "MIAI (Registro da consulta + CID/CIAP de Diabetes)",
-                "Ficha de Procedimentos (Aferição PA)"
+                "MIAI", "Ficha de Procedimentos"
               ]
             }
           },
@@ -364,23 +382,25 @@
             iconName: "Stethoscope",
             category: "Crônicas",
             targetDescription: "> 75%",
-            description: "Acompanhamento de pessoas com Hipertensão.",
+            description: "Acompanhamento de pessoas com Hipertensão (4 Boas Práticas).",
             requirements: [
-              { title: "Consulta", text: "Pelo menos 1 consulta (Médico/Enf) nos últimos 6 meses." },
-              { title: "Pressão Arterial", text: "Aferição obrigatória a cada 6 meses." }
+              { title: "Semestral (A, B)", text: "1 consulta (Méd/Enf) + 1 Aferição de PA." },
+              { title: "Anual (C)", text: "1 registro de Peso e Altura nos últimos 12 meses." },
+              { title: "Visitas (D)", text: "2 Visitas Domiciliares (ACS) nos últimos 12 meses (intervalo mín. 30 dias)." }
             ],
             technicalDetails: {
               procedures: [
                 "Consulta Médica/Enfermagem",
-                "Aferição de Pressão Arterial (Cód: 03.01.10.003-9)"
+                "Aferição de Pressão Arterial (03.01.10.003-9)",
+                "Avaliação Antropométrica"
               ],
               cbos: [
-                "Médico (2251) / Enfermeiro (2235)",
-                "Técnico de Enfermagem (Aferição PA)"
+                "Médico / Enfermeiro",
+                "Técnico de Enfermagem",
+                "ACS (Visitas)"
               ],
               forms: [
-                "MIAI (Registro da consulta + CID/CIAP de Hipertensão)",
-                "Ficha de Procedimentos (Aferição PA)"
+                "MIAI", "Ficha de Procedimentos"
               ]
             }
           },
@@ -391,27 +411,26 @@
             iconName: "Users",
             category: "Idosos",
             targetDescription: "> 75%",
-            description: "Atenção integral à saúde da pessoa com 60 anos ou mais.",
+            description: "Atenção integral à saúde da pessoa com 60 anos ou mais (4 Boas Práticas).",
             requirements: [
-              { title: "Vacinação", text: "Registro de vacina Influenza/Polio." },
-              { title: "Antropometria", text: "Peso e altura simultâneos nos últimos 12 meses." }
+              { title: "Consulta (A)", text: "1 consulta (Méd/Enf) nos últimos 12 meses." },
+              { title: "Antropometria (B)", text: "1 registro simultâneo de Peso e Altura nos últimos 12 meses." },
+              { title: "Visitas (C)", text: "2 Visitas Domiciliares (ACS) nos últimos 12 meses (intervalo mín. 30 dias)." },
+              { title: "Vacinação (D)", text: "1 dose de vacina Influenza (Gripe) nos últimos 12 meses." }
             ],
             technicalDetails: {
               procedures: [
-                "Vacinação (Campanha ou Rotina)",
-                "Aferição de Pressão Arterial",
-                "Medição de Peso e Altura",
-                "Consulta Médica/Enfermagem (Avaliação Multidimensional)"
+                "Consulta Médica/Enfermagem",
+                "Vacinação Influenza (33 ou 77)",
+                "Medição de Peso e Altura"
               ],
               cbos: [
-                "Médico / Enfermeiro (Consulta)",
-                "Técnico de Enfermagem (Vacina/Dados vitais)",
-                "ACS (Visita)"
+                "Médico / Enfermeiro",
+                "Técnico de Enfermagem",
+                "ACS"
               ],
               forms: [
-                "Ficha de Vacinação",
-                "MIAI (Consulta)",
-                "Ficha de Procedimentos (Peso/Altura/PA)"
+                "Ficha de Vacinação", "MIAI", "Ficha de Procedimentos"
               ]
             }
           },
@@ -422,23 +441,26 @@
             iconName: "ShieldPlus",
             category: "Saúde da Mulher",
             targetDescription: "> 75%",
-            description: "Rastreamento de câncer de colo de útero e mama.",
+            description: "Rastreamento de câncer e saúde sexual (Mulheres e Homens Transgênero).",
             requirements: [
-              { title: "Citopatológico", text: "Mulheres 25-64 anos (a cada 3 anos)." },
-              { title: "Mamografia", text: "Mulheres 50-69 anos (a cada 2 anos)." }
+              { title: "Colo do Útero (A)", text: "Citopatológico (25-64 anos) a cada 36 meses." },
+              { title: "Mama (D)", text: "Mamografia (50-69 anos) a cada 24 meses." },
+              { title: "Vacina HPV (B)", text: "1 dose para meninas de 9 a 14 anos." },
+              { title: "Saúde Sexual (C)", text: "1 atendimento sobre saúde sexual/reprodutiva (14-69 anos) nos últimos 12 meses." }
             ],
             technicalDetails: {
               procedures: [
-                "Coleta de Citopatológico (Cód: 02.01.02.003-3)",
-                "Solicitação de Mamografia Bilateral (Cód: 02.04.03.018-8)"
+                "Coleta de Citopatológico (02.01.02.003-3)",
+                "Mamografia Bilateral (02.04.03.018-8)",
+                "Vacina HPV (67 ou 93)",
+                "Atendimento Saúde Sexual (CID/CIAP específico)"
               ],
               cbos: [
-                "Enfermeiro (Coleta Cito)",
-                "Médico (Coleta Cito / Solicitação Mamografia)"
+                "Enfermeiro / Médico",
+                "Equipe Multi (para saúde sexual)"
               ],
               forms: [
-                "MIAI (Campo: Exames Solicitados/Avaliados)",
-                "Ficha de Procedimentos (Registro da Coleta)"
+                "MIAI", "Ficha de Procedimentos", "Ficha de Vacinação"
               ]
             }
           }
@@ -633,7 +655,18 @@
             const matchesSearch = 
                 indicator.title.toLowerCase().includes(searchLower) || 
                 indicator.code.toLowerCase().includes(searchLower) || 
-                (indicator.description && indicator.description.toLowerCase().includes(searchLower));
+                (indicator.description && indicator.description.toLowerCase().includes(searchLower)) ||
+                // Search in requirements
+                (indicator.requirements && indicator.requirements.some(req => 
+                    req.title.toLowerCase().includes(searchLower) || 
+                    req.text.toLowerCase().includes(searchLower)
+                )) ||
+                // Search in technicalDetails
+                (indicator.technicalDetails && (
+                    indicator.technicalDetails.procedures.some(p => p.toLowerCase().includes(searchLower)) ||
+                    indicator.technicalDetails.cbos.some(c => c.toLowerCase().includes(searchLower)) ||
+                    indicator.technicalDetails.forms.some(f => f.toLowerCase().includes(searchLower))
+                ));
 
             return matchesCategory && matchesSearch;
           });
@@ -645,11 +678,7 @@
               <aside className="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
                 <div className="p-6 border-b border-slate-800">
                   <h1 className="text-xl font-bold flex items-center gap-2">
-                    <img 
-                        src="./seu-logo.png" 
-                        alt="Logo SYSMAR" 
-                        className="w-8 h-8 object-contain" 
-                    />
+                    <Icon name="Activity" className="w-8 h-8 text-indigo-400" />
                     SYSMAR      
                   </h1>
                   <p className="text-xs text-slate-400 mt-1">Painel de Metas 2025</p>
@@ -724,7 +753,7 @@
                       Gestor SUS
                     </h1>
                   </div>
-                  <div className="flex gap-2 overflow-x-auto pb-2">
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                       <button 
                         onClick={() => {setActiveTab("APS"); setSearchTerm("");}} 
                         className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap font-medium ${activeTab === "APS" ? "bg-indigo-600" : "bg-slate-800"}`}
